@@ -36,40 +36,7 @@ global_means = pd.read_csv('global_means.csv')
 
 pitches_df = hf.prepare_data(pitches_df, game_only=False)
 
-def process_dataframe(pitches_df, batter, platoon_state_encoded, pitch_group_encoded, gmm_models):    
-    pitches_df['Batter'] = batter
-    pitches_df['PlatoonStateEncoded'] = platoon_state_encoded
-    pitches_df['PitchGroupEncoded'] = pitch_group_encoded
-
-    pitches_df['PlateLocSide'] = pitches_df['PlateLocSideBucket']
-    pitches_df['PlateLocHeight'] = pitches_df['PlateLocHeightBucket']
-
-    scaler = StandardScaler()
-
-    scaled_columns = [f"{feature}_Scaled" for feature in numerical_features]
-    pitches_df[scaled_columns] = scaler.fit_transform(pitches_df[numerical_features])
-
-    pitcher_throws = 'Left' if platoon_state_encoded <= 1 else 'Right'
-
-    gmm_key = f"{pitcher_throws}_PitchGroup_{int(pitch_group_encoded)}"
-    gmm = gmm_models[gmm_key]
-
-    pitches_df = pitches_df.loc[:, ~pitches_df.columns.str.startswith('prob_')]
-
-    pitches_df = hf.add_probabilities(pitches_df)
-
-    pitches_df['Model'] = pitcher_throws
-
-    pitches_df, pivoted_values = hf.calculate_shrunken_means(
-        pitches_df[(pitches_df['Batter'] == batter) & (pitches_df['PitcherThrows'] == pitcher_throws)], global_means
-    )
-
-    pitches_df = hf.compute_batter_stuff_value(pitches_df, pivoted_values)
-
-    return pitches_df
-
-
-def simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter):
+def simulate_synthetic_dataframe(pitches_df, pitcher_id, pitch_type, batter_id):
     synthetic_data = pd.DataFrame(
         list(product(side_buckets, height_buckets, count_values)),
         columns=['PlateLocSideBucket', 'PlateLocHeightBucket', 'CountEncoded']
@@ -78,7 +45,7 @@ def simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter):
     synthetic_data['PitchType'] = pitch_type
 
     pitcher_throws_mode = (
-        pitches_df.loc[pitches_df['Pitcher'] == pitcher, 'PitcherThrows']
+        pitches_df.loc[pitches_df['PitcherId'] == pitcher_id, 'PitcherThrows']
         .mode()
         .iloc[0]
     )
@@ -86,7 +53,7 @@ def simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter):
     synthetic_data['PitcherThrows'] = pitcher_throws_mode
 
     batter_side_mode = (
-        pitches_df.loc[(pitches_df['Batter'] == batter) & (pitches_df['PitcherThrows'] == pitcher_throws_mode)]
+        pitches_df.loc[(pitches_df['BatterId'] == batter_id) & (pitches_df['PitcherThrows'] == pitcher_throws_mode)]
         .sort_values(by='UTCDateTime', ascending=False)
         .head(100)
         .BatterSide
@@ -97,13 +64,13 @@ def simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter):
     synthetic_data['PlatoonStateEncoded'] = platoon_state_encoded
 
     synthetic_data['BatterLeagueEncoded'] = (
-        pitches_df.loc[pitches_df['Batter'] == batter]
+        pitches_df.loc[pitches_df['BatterId'] == batter_id]
         .sort_values('UTCDateTime', ascending=False)
         .iloc[0]['BatterLeagueEncoded']
     )
 
     filtered_df = pitches_df.loc[
-        (pitches_df['Pitcher'] == pitcher) & (pitches_df['PitchType'] == pitch_type)
+        (pitches_df['PitcherId'] == pitcher_id) & (pitches_df['PitchType'] == pitch_type)
     ]
 
     recent_rows = filtered_df.sort_values(by='UTCDateTime', ascending=False).head(100)
@@ -114,7 +81,7 @@ def simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter):
         synthetic_data[feature] = median_value
 
     pitch_group_mode = pitches_df.loc[
-        (pitches_df['Pitcher'] == pitcher) & (pitches_df['PitchType'] == pitch_type),
+        (pitches_df['PitcherId'] == pitcher_id) & (pitches_df['PitchType'] == pitch_type),
         'PitchGroupEncoded'
     ].mode()[0]
     synthetic_data['PitchGroupEncoded'] = pitch_group_mode
@@ -122,18 +89,18 @@ def simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter):
     return synthetic_data
 
 
-def calculate_batter_metrics(synthetic_df, pitches_df, pitcher, batter):
+def calculate_batter_metrics(synthetic_df, pitches_df, pitcher_id, batter_id):
     platoon_state_encoded = synthetic_df['PlatoonStateEncoded'].iloc[0]
     pitch_group_encoded = synthetic_df['PitchGroupEncoded'].iloc[0]
     pitcher_throws = synthetic_df['PitcherThrows'].iloc[0]
 
-    batter_id = pitches_df[pitches_df['Batter'] == batter]['BatterId'].mode().iloc[0]
+    batter_id = pitches_df[pitches_df['BatterId'] == batter_id]['BatterId'].mode().iloc[0]
 
     synthetic_df['PlateLocSide'] = (synthetic_df['PlateLocSideBucket'].astype(float))
     synthetic_df['PlateLocHeight'] = (synthetic_df['PlateLocHeightBucket'].astype(float))
 
     synthetic_df = hf.add_probabilities(synthetic_df)
-    batter_df = hf.add_probabilities(pitches_df[(pitches_df['Batter'] == batter) & (pitches_df['PitcherThrows'] == pitcher_throws)])
+    batter_df = hf.add_probabilities(pitches_df[(pitches_df['BatterId'] == batter_id) & (pitches_df['PitcherThrows'] == pitcher_throws)])
 
     _, pivoted_values = hf.calculate_shrunken_means(
         batter_df, global_means
@@ -146,30 +113,30 @@ def calculate_batter_metrics(synthetic_df, pitches_df, pitcher, batter):
     return synthetic_df
 
 
-def generate_figs(pitches_df, rv_model, pitcher, batter):
+def generate_figs(pitches_df, rv_model, pitcher_id, batter_id):
     columns_to_drop = [col for col in pitches_df.columns if col.startswith('DeltaRunValue_') or col.startswith('prob_')]
     pitches_df = pitches_df.drop(columns=columns_to_drop)
 
     if not pitches_df.index.is_unique:
         pitches_df = pitches_df.reset_index(drop=True)
 
-    pitcher_throws_series = pitches_df.loc[pitches_df['Pitcher'] == pitcher, 'PitcherThrows']
-    batter_side_series = pitches_df.loc[pitches_df['Batter'] == batter, 'BatterSide']
+    pitcher_throws_series = pitches_df.loc[pitches_df['PitcherId'] == pitcher_id, 'PitcherThrows']
+    batter_side_series = pitches_df.loc[pitches_df['BatterId'] == batter_id, 'BatterSide']
 
     if not pitcher_throws_series.empty:
         pitcher_throws_mode = pitcher_throws_series.mode().iloc[0]
     else:
-        raise ValueError(f"No matching rows found for pitcher: {pitcher}")
+        raise ValueError(f"No matching rows found for pitcher: {pitcher_id}")
 
     if not batter_side_series.empty:
         batter_side_mode = batter_side_series.mode().iloc[0]
     else:
-        raise ValueError(f"No matching rows found for batter: {batter}")
+        raise ValueError(f"No matching rows found for batter: {batter_id}")
 
     platoon_state_encoded = platoon_state_mapping[(pitcher_throws_mode, batter_side_mode)]
 
     filtered_df = pitches_df[
-        (pitches_df['Pitcher'] == pitcher) & 
+        (pitches_df['PitcherId'] == pitcher_id) & 
         (pitches_df['TaggedPitchType'] != 'Undefined') & 
         (pitches_df['PlatoonStateEncoded'] == platoon_state_encoded)
     ]
@@ -188,10 +155,10 @@ def generate_figs(pitches_df, rv_model, pitcher, batter):
     )
 
     pitcher_rows = pitches_df[
-        (pitches_df['Pitcher'] == pitcher) & (pitches_df['TaggedPitchType'] != 'Undefined')
-    ].sort_values(by='UTCDateTime', ascending=False).head(500)
+        (pitches_df['PitcherId'] == pitcher_id) & (pitches_df['TaggedPitchType'] != 'Undefined')
+    ].sort_values(by='UTCDateTime', ascending=False).head(1000)
 
-    batter_id = pitches_df[pitches_df['Batter'] == batter]['BatterId'].mode().iloc[0]
+    batter_id = pitches_df[pitches_df['BatterId'] == batter_id]['BatterId'].mode().iloc[0]
 
     pitch_type_means = []
     pitch_usage = []
@@ -207,15 +174,13 @@ def generate_figs(pitches_df, rv_model, pitcher, batter):
 
         pitch_group_encoded = (
             pitches_df.loc[
-                (pitches_df['Pitcher'] == pitcher) & 
+                (pitches_df['PitcherId'] == pitcher_id) & 
                 (pitches_df['TaggedPitchType'] == pitch_type), 
                 'PitchGroupEncoded'
             ].mode()[0]
         )
 
-        pitch_type_df = process_dataframe(
-            pitch_type_df, batter, platoon_state_encoded, pitch_group_encoded, gmm_models
-        )
+        pitch_type_df = calculate_batter_metrics(pitch_type_df, pitches_df, pitcher_id, batter_id)
 
         rel_angles = pitch_type_df[['VertRelAngle', 'HorzRelAngle']]
         kmeans = KMeans(n_clusters=1, random_state=100)
@@ -274,10 +239,10 @@ def generate_figs(pitches_df, rv_model, pitcher, batter):
         grid_col_idx = col_idx + (col_idx // 3)
         ax = fig.add_subplot(gs[0, grid_col_idx])
 
-        synthetic_df = simulate_synthetic_dataframe(pitches_df, pitcher, pitch_type, batter)
+        synthetic_df = simulate_synthetic_dataframe(pitches_df, pitcher_id, pitch_type, batter_id)
         synthetic_df['Year'] = 2024
 
-        synthetic_df = calculate_batter_metrics(synthetic_df, pitches_df, pitcher, batter)
+        synthetic_df = calculate_batter_metrics(synthetic_df, pitches_df, pitcher_id, batter_id)
 
         expected_features = rv_model.get_booster().feature_names
         model_df = synthetic_df[expected_features]
@@ -293,13 +258,7 @@ def generate_figs(pitches_df, rv_model, pitcher, batter):
 
         command_score = next(score for pt, score in pitch_command if pt == pitch_type)
 
-        plot_position = (col_idx % 3) + 1
-        if plot_position == 2:
-            sigma = max(0.5, min(command_score, 3)) * 0.75
-        elif plot_position == 3:
-            sigma = max(0.5, min(command_score, 3)) * 0.75
-        else:
-            sigma = max(0.5, min(command_score, 3)) * 0.75
+        sigma = max(0.5, min(command_score, 3)) * 0.75
 
         smoothed_weighted_data = gaussian_filter(heatmap_data, sigma=sigma)
         smoothed_weighted_data = smoothed_weighted_data[1:-1, 1:-1]
@@ -347,6 +306,9 @@ def generate_figs(pitches_df, rv_model, pitcher, batter):
             fontweight="bold"
         )
 
+        if pitch_type in ["Fastball", "Sinker"]:
+            pitch_type_mean_value -= 0.01
+
         if pitch_type_mean_value <= -0.045:
             stars = "★★★★★"
             star_color = "green"
@@ -393,37 +355,59 @@ def generate_figs(pitches_df, rv_model, pitcher, batter):
             color=star_color
         )
 
-    batter_name = " ".join(reversed(batter.split(", ")))
-    handedness = "(L)" if platoon_state_encoded in [0, 2] else "(R)"
-    batter_display_name = f"{batter_name} {handedness}"
+    batter = pitches_df.loc[pitches_df['BatterId'] == batter_id, 'Batter'].mode()
+
+    if not batter.empty:
+        batter_name = " ".join(reversed(batter.iloc[0].split(", ")))
+        handedness = "(L)" if platoon_state_encoded in [0, 2] else "(R)"
+        batter_display_name = f"{batter_name} {handedness}"
+    else:
+        batter_display_name = "Unknown Batter"
 
     fig.suptitle(f'{batter_display_name}', fontsize=40, y=1.25)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     return fig, handedness
 
 
-def generate_fig_dict(pitches_df, final_model, pitcher, batters):
-    pitcher_name = " ".join(reversed(pitcher.split(", ")))
+def generate_fig_dict(pitches_df, final_model, pitcher_id, batters):
+    if pitches_df['BatterId'].dtype != 'float64':
+        pitches_df['BatterId'] = pitches_df['BatterId'].astype(float)
 
     fig_dict = {}
 
-    for batter in batters:
-        fig, handedness = generate_figs(pitches_df, rv_model, pitcher, batter)
-        key = f"{batter}_{handedness}"
+    primary_pitcher_id = float(pitcher_id[0])
+    for p_id in pitcher_id[1:]:
+        pitches_df.loc[pitches_df['PitcherId'] == float(p_id), 'PitcherId'] = primary_pitcher_id
+
+    for batter_group in batters:
+        primary_batter_id = float(batter_group[0])
+
+        for batter_id in batter_group[1:]:
+            pitches_df.loc[pitches_df['BatterId'] == float(batter_id), 'BatterId'] = primary_batter_id
+
+        fig, handedness = generate_figs(pitches_df, final_model, primary_pitcher_id, primary_batter_id)
+        key = f"{int(primary_batter_id)}_{handedness}"
         fig_dict[key] = fig
 
     return fig_dict
 
 
-def generate_pdf(pitcher, batters, opponent, date):
-    figures = generate_fig_dict(pitches_df, rv_model, pitcher, batters)
+def generate_pdf(pitcher_id, batters, opponent, date):
+    figures = generate_fig_dict(pitches_df, rv_model, pitcher_id, batters)
     
     pdf = FPDF(format='letter')
     pdf.add_page()
 
     pdf.image("georgia_logo.png", x=170, y=5, w=30)
 
-    pitcher_name = " ".join(reversed(pitcher.split(", ")))
+    pitcher = pitches_df.loc[pitches_df['PitcherId'] == pitcher_id[0], 'Pitcher'].mode()
+
+    if not pitcher.empty:
+        pitcher_name = pitcher.iloc[0]
+    else:
+        pitcher_name = None
+
+    pitcher_name = " ".join(reversed(pitcher_name.split(", ")))
     pdf.set_font("Arial", size=16, style='B')
     pdf.cell(190, 10, txt=f"{pitcher_name} vs. {opponent}", ln=True, align="C")
 
@@ -475,23 +459,32 @@ def generate_pdf(pitcher, batters, opponent, date):
 
         os.remove(f"{name}.png")
 
-    pitcher_last_name = pitcher.split(", ")[0].lower()
+    pitcher_last_name = pitcher_name.split(" ")[1].lower()
     opponent_name = opponent.replace(" ", "").lower()
     date_formatted = datetime.strptime(date, "%B %d, %Y").strftime("%Y%m%d")
 
     os.makedirs('pdfs', exist_ok=True)
-    pdf.output(f"pdfs/{pitcher_last_name}_{opponent_name}_{date_formatted}.pdf")
+    file_path = f"pdfs/{pitcher_last_name}_{opponent_name}_{date_formatted}.pdf"
+    pdf.output(file_path)
+    print(f"PDF saved as {file_path}")
 
-    print("PDF created")
-
-pitcher = "Burns, Chase"
-batters = ["Serrano, Eli", "Pennington, Garrett", "Makarewicz, Alec", "Cozart, Jacob", "Butterworth, Brandon",
-            "Sosa, Alex", "Nixon, Luke", "Heavner, Matt", "Soles, Noah"]
+pitcher_id = [1000029106]
+batters = [
+            [702501, 1000092992], 
+            [693243, 1000115714],
+            [701062, 1000073031],
+            [695524, 1000036981],
+            [1000123201, 1000123431],
+            [806227, 1000102940],
+            [823352, 1000254928],
+            [703484, 10034360],
+            [1000051335, 1000079995]
+]
 
 opponent = "NC State"
 date = "June 10, 2024"
 
-generate_pdf(pitcher=pitcher, 
+generate_pdf(pitcher_id=pitcher_id, 
             batters=batters,
             opponent=opponent,
             date=date)

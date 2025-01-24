@@ -390,14 +390,27 @@ def add_probabilities(pitches_df):
 
         gmm = gmm_models[gmm_key]
 
+        # Get the indices of the group
         group_indices = group.index
 
+        # Get scaled data for the group
         scaled_data = pitches_df.loc[group_indices, scaled_columns]
+
+        # Ensure the scaled_data matches the number of rows in the probabilities
         probabilities = gmm.predict_proba(scaled_data)
 
-        temp_prob_df = pd.DataFrame(probabilities, 
-                                    columns=[f'prob_{i}' for i in range(num_clusters)], 
-                                    index=group_indices)
+        if len(group_indices) != probabilities.shape[0]:
+            raise ValueError(
+                f"Mismatch between group indices ({len(group_indices)}) "
+                f"and probabilities ({probabilities.shape[0]}). Check the input data."
+            )
+
+        # Create the DataFrame of probabilities
+        temp_prob_df = pd.DataFrame(
+            probabilities,
+            columns=[f'prob_{i}' for i in range(probabilities.shape[1])],
+            index=group_indices
+        )
 
         prob_dfs.append(temp_prob_df)
 
@@ -443,12 +456,11 @@ def calculate_global_means(pitches_df):
     return global_means_df
 
 
-def calculate_shrunken_means(pitches_df, global_means):
+def calculate_shrunken_means(pitches_df, global_means, batter=None):
     results = []
 
     if pitches_df['UTCDateTime'].dtype == 'object':
         pitches_df['UTCDateTime'] = pd.to_datetime(pitches_df['UTCDateTime'])
-
     current_day = pitches_df['UTCDateTime'].max().normalize()
 
     pitches_df['DayDiff'] = (current_day - pitches_df['UTCDateTime'].dt.normalize()).dt.days
@@ -459,6 +471,9 @@ def calculate_shrunken_means(pitches_df, global_means):
     prob_columns = [f'prob_{i}' for i in range(num_clusters)]
 
     for (batter_id, pitcher_throws), group in pitches_df.groupby(['BatterId', 'PitcherThrows']):
+        if batter is not None and batter_id != batter:
+            continue
+
         cluster_stats = []
 
         for cluster in range(num_clusters):

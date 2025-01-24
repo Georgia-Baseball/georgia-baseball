@@ -73,7 +73,7 @@ pitch_group_mapping = {
 side_buckets = np.array([-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8])
 height_buckets = np.array([0.6, 1.2, 1.8, 2.4, 3, 3.6, 4.2])
 
-num_clusters = 10
+num_clusters = 25
 
 numerical_features = ['RelSpeed', 'ax0', 'az0', 'PlateLocSide', 'PlateLocHeight']
 cluster_features = ['RelSpeed', 'ax0', 'az0', 'PitcherThrows', 'PitchGroupEncoded', 'PlateLocSide', 'PlateLocHeight']
@@ -84,7 +84,7 @@ model_keys = [
     'Right_PitchGroup_0', 'Right_PitchGroup_1', 'Right_PitchGroup_2'
 ]
 
-pseudo_sample_size = 5
+pseudo_sample_size = 50
 
 rv_features = ['RelSpeed', 'SpinRate', 'SpinAxis', 'RelHeight', 'RelSide', 'Extension', 
             'PlateLocSideBucket', 'PlateLocHeightBucket', 'ax0', 'ay0', 'az0', 
