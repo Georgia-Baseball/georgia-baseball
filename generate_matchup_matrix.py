@@ -260,7 +260,7 @@ def plot_matchup_matrix_to_pdf(matchup_weighted_averages, pitches_df, pitching_t
     pdf.image(temp_image_path, x=10, y=30, w=190)
 
     directory = "matchup_matrices"
-    output_filename = os.path.join(directory, "output.pdf")
+    output_filename = os.path.join(directory, output_filename)
 
     if not os.path.exists(directory):
         os.makedirs(directory)
