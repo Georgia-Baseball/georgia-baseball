@@ -82,7 +82,21 @@ def clean_data(pitches_df, game_only=False):
 
 
 def calculate_game_metrics(pitches_df):
-    grouped = pitches_df.groupby(['GameUID', 'Top/Bottom'])
+    date_ranges = [
+        ('2025-02-14', '2025-07-01'),
+        ('2024-02-16', '2024-06-24'),
+        ('2023-02-17', '2023-06-26'),
+        ('2022-02-18', '2022-06-22')
+    ]
+    
+    in_game_df = pd.concat([
+        pitches_df[(pitches_df['Date'] >= pd.to_datetime(start)) & (pitches_df['Date'] <= pd.to_datetime(end))]
+        for start, end in date_ranges
+    ])
+    
+    in_game_df = in_game_df[(in_game_df['PitcherTeam'] != 'GEO_PRA') & (in_game_df['BatterTeam'] != 'GEO_PRA')]
+
+    grouped = in_game_df.groupby(['GameUID', 'Top/Bottom'])
 
     game_df = grouped.agg(
         sum_runs=('RunsScored', 'sum'),
@@ -97,7 +111,10 @@ def calculate_game_metrics(pitches_df):
     return game_df
 
 
-def predict_pa_run_value(game_df):
+def predict_pa_run_value(game_df):    
+    game_df['sum_runs'] = pd.to_numeric(game_df['sum_runs'], errors='coerce')
+    game_df = game_df.dropna(subset=['sum_runs'])
+    
     X = game_df[['num_single', 'num_double', 'num_triple', 'num_homerun', 'num_walk', 'num_hitbypitch']]
     y = game_df['sum_runs']
 

@@ -182,7 +182,7 @@ def generate_figs(pitches_df, rv_model, pitcher_id, batter_id):
 
         pitch_type_df = calculate_batter_metrics(pitch_type_df, pitches_df, pitcher_id, batter_id)
 
-        rel_angles = pitch_type_df[['VertRelAngle', 'HorzRelAngle']]
+        rel_angles = pitch_type_df[['VertRelAngle', 'HorzRelAngle']].dropna()
         kmeans = KMeans(n_clusters=1, random_state=100)
         kmeans.fit(rel_angles)
         center_vert, center_horz = kmeans.cluster_centers_[0]
@@ -206,11 +206,18 @@ def generate_figs(pitches_df, rv_model, pitcher_id, batter_id):
         rank_df = pitch_type_df[expected_features].copy()
         rank_df['ExpectedRunValue'] = rv_model.predict(rank_df)
         mean_value = rank_df['ExpectedRunValue'].mean()
+        if pitch_type in ["Fastball", "Sinker"]:
+            mean_value -= 0.01
         pitch_type_means.append((pitch_type, mean_value))
+    
+    pitch_usage_dict = dict(pitch_usage)
 
-    sorted_pitch_types = [
-        pt[0] for pt in sorted(pitch_usage, key=lambda x: x[1], reverse=True) if pt[1] >= 0.01
-    ][:5]
+    filtered_pitch_types = [
+        (pitch_type, mean_value) for pitch_type, mean_value in pitch_type_means
+        if pitch_usage_dict.get(pitch_type, 0) >= 0.01
+    ]
+
+    sorted_pitch_types = [pt[0] for pt in sorted(filtered_pitch_types, key=lambda x: x[1])][:5]
 
     n_pitch_types = len(sorted_pitch_types)
     n_cols = n_pitch_types * 3 + (n_pitch_types - 1)
@@ -258,7 +265,7 @@ def generate_figs(pitches_df, rv_model, pitcher_id, batter_id):
 
         command_score = next(score for pt, score in pitch_command if pt == pitch_type)
 
-        sigma = max(0.5, min(command_score, 3)) * 0.75
+        sigma = max(0.25, min(command_score, 2)) * 0.5
 
         smoothed_weighted_data = gaussian_filter(heatmap_data, sigma=sigma)
         smoothed_weighted_data = smoothed_weighted_data[1:-1, 1:-1]
@@ -305,9 +312,6 @@ def generate_figs(pitches_df, rv_model, pitcher_id, batter_id):
             fontsize=24,
             fontweight="bold"
         )
-
-        if pitch_type in ["Fastball", "Sinker"]:
-            pitch_type_mean_value -= 0.01
 
         if pitch_type_mean_value <= -0.045:
             stars = "★★★★★"
@@ -471,11 +475,11 @@ def generate_pdf(pitcher_id, batters, opponent, date):
 ### DO NOT TOUCH THE CODE ABOVE
 
 ### PUT PITCHER ID HERE
-pitcher_id = [1000029106]
+pitcher_id = [803287, 1000110595]
 
 ### PUT BATTER IDS HERE
 batters = [
-            [702501, 1000092992], ### BATTER 1
+            [1000255777], ### BATTER 1
             [693243, 1000115714], ### BATTER 2
             [701062, 1000073031], ### BATTER 3
             [695524, 1000036981], ### BATTER 4
@@ -492,7 +496,7 @@ opponent = "NC State"
 ### PUT THE DATE HERE
 date = "June 10, 2024"
 
-### LEAVE THIS CODE AS IS
+## LEAVE THIS CODE AS IS
 generate_pdf(pitcher_id=pitcher_id, 
             batters=batters,
             opponent=opponent,
