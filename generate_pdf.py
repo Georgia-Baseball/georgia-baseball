@@ -475,26 +475,26 @@ def generate_pdf(pitcher_id, batters, opponent, date):
 ### DO NOT TOUCH THE CODE ABOVE
 
 ### PUT PITCHER ID HERE
-pitcher_id = [803287, 1000110595]
+pitcher_id = [701368, 1000187635]
 
 ### PUT BATTER IDS HERE
 batters = [
-            [1000255777], ### BATTER 1
-            [693243, 1000115714], ### BATTER 2
-            [701062, 1000073031], ### BATTER 3
-            [695524, 1000036981], ### BATTER 4
-            [1000123201, 1000123431], ### BATTER 5
-            [806227, 1000102940], ### BATTER 6
-            [823352, 1000254928], ### BATTER 7
-            [703484, 10034360], ### BATTER 8
-            [1000051335, 1000079995] ### BATTER 9
+            [695477, 1000052101], ### BATTER 1
+            [809707, 1000133690], ### BATTER 2
+            [702705, 1000107443], ### BATTER 3
+            [692232, 1000064202], ### BATTER 4
+            [687408, 1000013128], ### BATTER 5
+            [699821, 1000079889], ### BATTER 6
+            [690970], ### BATTER 7
+            [802119, 1000073064], ### BATTER 8
+            [804569, 1000133791] ### BATTER 9
 ]
 
 ### PUT THE OPPONENT HERE
-opponent = "NC State"
+opponent = "Georgia"
 
 ### PUT THE DATE HERE
-date = "June 10, 2024"
+date = "January 29, 2025"
 
 ## LEAVE THIS CODE AS IS
 generate_pdf(pitcher_id=pitcher_id, 
