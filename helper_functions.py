@@ -32,6 +32,12 @@ def clean_data(pitches_df, game_only=False):
     pitches_df = pitches_df[columns_to_keep]
     pitches_df = pitches_df.dropna(subset=['RelSpeed', 'ax0', 'az0', 'PlateLocSide', 'PlateLocHeight'])
 
+    batter_side_mode = pitches_df.groupby(['BatterId', 'PitcherThrows'])['BatterSide'].agg(lambda x: x.mode()[0] if not x.mode().empty else None).to_dict()
+    pitches_df['BatterSide'] = pitches_df.apply(lambda row: batter_side_mode.get((row['BatterId'], row['PitcherThrows']), row['BatterSide']) if pd.isna(row['BatterSide']) else row['BatterSide'], axis=1)
+
+    pitcher_throws_mode = pitches_df.groupby(['PitcherId', 'BatterSide'])['PitcherThrows'].agg(lambda x: x.mode()[0] if not x.mode().empty else None).to_dict()
+    pitches_df['PitcherThrows'] = pitches_df.apply(lambda row: pitcher_throws_mode.get((row['PitcherId'], row['BatterSide']), row['PitcherThrows']) if pd.isna(row['PitcherThrows']) else row['PitcherThrows'], axis=1)
+
     pitches_df['Date'] = pd.to_datetime(pitches_df['Date'], errors='coerce')
     pitches_df = pitches_df.dropna(subset=['Date'])
 
