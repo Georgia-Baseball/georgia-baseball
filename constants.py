@@ -18,6 +18,7 @@ bb_features = ['ExitSpeed', 'Angle', 'DirectionBucket']
 bb_target = 'DeltaRunValue'
 
 batter_league_encoding = {
+    'Team': 0,
     'SEC': 0,
     'ACC': 1,
     'SBELT': 2,
@@ -84,7 +85,7 @@ model_keys = [
     'Right_PitchGroup_0', 'Right_PitchGroup_1', 'Right_PitchGroup_2'
 ]
 
-pseudo_sample_size = 50
+pseudo_sample_size = 25
 
 rv_features = ['RelSpeed', 'SpinRate', 'SpinAxis', 'RelHeight', 'RelSide', 'Extension', 
             'PlateLocSideBucket', 'PlateLocHeightBucket', 'ax0', 'ay0', 'az0', 
