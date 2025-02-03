@@ -56,7 +56,7 @@ def clean_data(pitches_df, game_only=False):
         
         pitches_df = pitches_df[(pitches_df['PitcherTeam'] != 'GEO_PRA') & (pitches_df['BatterTeam'] != 'GEO_PRA')]
 
-    pitches_df = pitches_df[pitches_df['Level'] == 'D1']
+    pitches_df = pitches_df[(pitches_df['Level'] == 'D1') | (pitches_df['Level'] == 'TeamExclusive')]
 
     pitches_df = pitches_df[(pitches_df['Balls'] <= 3) & (pitches_df['Strikes'] <= 2)]
     pitches_df = pitches_df[pitches_df['PitcherThrows'].isin(['Left', 'Right'])]
@@ -413,13 +413,10 @@ def add_probabilities(pitches_df):
 
         gmm = gmm_models[gmm_key]
 
-        # Get the indices of the group
         group_indices = group.index
 
-        # Get scaled data for the group
         scaled_data = pitches_df.loc[group_indices, scaled_columns]
 
-        # Ensure the scaled_data matches the number of rows in the probabilities
         probabilities = gmm.predict_proba(scaled_data)
 
         if len(group_indices) != probabilities.shape[0]:
@@ -428,7 +425,6 @@ def add_probabilities(pitches_df):
                 f"and probabilities ({probabilities.shape[0]}). Check the input data."
             )
 
-        # Create the DataFrame of probabilities
         temp_prob_df = pd.DataFrame(
             probabilities,
             columns=[f'prob_{i}' for i in range(probabilities.shape[1])],
