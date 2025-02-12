@@ -25,7 +25,7 @@ warnings.filterwarnings('ignore')
 
 @st.cache_data
 def load_data():
-    file_id = "1OfJoS6nEOHDaIJlnNt-4Qj3Jj3npPhHR"
+    file_id = "1va1he-5-8sHF0UEM05dp-9bi9R2XN2kg"
     url = f"https://drive.google.com/uc?id={file_id}"
     output = "all_pitches.csv"
 
@@ -39,6 +39,8 @@ def load_data():
 
     pitches_df = pd.concat(chunk_list, ignore_index=True)
     global_means = pd.read_csv("global_means.csv")
+
+    pitches_df = hf.prepare_data(pitches_df, game_only=False)
 
     return pitches_df, global_means
 
