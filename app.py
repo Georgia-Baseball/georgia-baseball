@@ -24,7 +24,10 @@ warnings.filterwarnings('ignore')
 
 @st.cache_data
 def load_data():
-    pitches_df = pd.read_csv("all_pitches.csv") 
+    url = "https://drive.google.com/file/d/1OfJoS6nEOHDaIJlnNt-4Qj3Jj3npPhHR/view?usp=sharing"
+    output = "all_pitches.csv"
+    gdown.download(url, output, quiet=False)
+    pitches_df = pd.read_csv(output) 
     global_means = pd.read_csv("global_means.csv")
     pitches_df = hf.prepare_data(pitches_df, game_only=False)
     return pitches_df, global_means
