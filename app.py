@@ -30,11 +30,16 @@ def load_data():
     output = "all_pitches.csv"
 
     gdown.download(url, output, quiet=False)
-    pitches_df = pd.read_csv(output)
+
+    chunk_list = []
+    chunk_size = 100000
+
+    for chunk in pd.read_csv(output, chunksize=chunk_size):
+        chunk_list.append(chunk)
+
+    pitches_df = pd.concat(chunk_list, ignore_index=True)
     global_means = pd.read_csv("global_means.csv")
 
-    pitches_df = hf.prepare_data(pitches_df, game_only=False)
-    
     return pitches_df, global_means
 
 
