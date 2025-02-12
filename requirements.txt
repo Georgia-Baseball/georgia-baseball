@@ -8,3 +8,4 @@ fpdf
 joblib
 datetime
 gdown
+xgboost
