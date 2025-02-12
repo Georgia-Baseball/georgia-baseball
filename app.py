@@ -78,7 +78,7 @@ def simulate_synthetic_dataframe(recent_rows, batter_df, pitch_type, balls, stri
         .iloc[0]['BatterLeagueEncoded']
     )
 
-    medians = recent_rows[recent_rows['TaggedPitchType'] == pitch_type].sort_values(by='UTCDateTime', ascending=False)[median_features].median().to_dict()
+    medians = recent_rows[recent_rows['PitchType'] == pitch_type].sort_values(by='UTCDateTime', ascending=False)[median_features].median().to_dict()
 
     for feature, median_value in medians.items():
         synthetic_data[feature] = median_value
@@ -158,8 +158,8 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
     qualifying_pitch_types = pitch_type_counts[pitch_type_counts >= 0.01 * len(recent_rows)].index.tolist()
 
     pitch_types = (
-        recent_rows[recent_rows['TaggedPitchType'].isin(qualifying_pitch_types)]
-        .groupby('TaggedPitchType')
+        recent_rows[recent_rows['PitchType'].isin(qualifying_pitch_types)]
+        .groupby('PitchType')
         .size()
         .sort_values(ascending=False)
         .index.tolist()
@@ -169,14 +169,14 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
     pitch_command = []
 
     for pitch_type in pitch_types:
-        pitch_type_df = recent_rows[recent_rows['TaggedPitchType'] == pitch_type]
+        pitch_type_df = recent_rows[recent_rows['PitchType'] == pitch_type]
 
         if pitch_type_df.empty:
             continue
 
         pitch_group_encoded = (
             pitch_type_df.loc[
-                (pitch_type_df['TaggedPitchType'] == pitch_type), 
+                (pitch_type_df['PitchType'] == pitch_type), 
                 'PitchGroupEncoded'
             ].mode()[0]
         )
@@ -251,7 +251,11 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
                 )
 
                 command_score = pitch_command_dict.get(pitch_type, 1)
-                sigma = (max(0.25, min(command_score, 2)) * (0.6 + ((balls - strikes) * 0.1)))
+
+                if len(recent_rows[recent_rows['PitchType'] == pitch_type]) >= 20:
+                    sigma = (max(0.25, min(command_score, 2)) * (0.6 + ((balls - strikes) * 0.1)))
+                else: 
+                    sigma = 0.8 + ((balls - strikes) * 0.1)
 
                 smoothed_weighted_data = gaussian_filter(heatmap_data, sigma=sigma)
                 smoothed_weighted_data = smoothed_weighted_data[1:-1, 1:-1]
@@ -299,7 +303,7 @@ st.write(f"Selected Batter: {batter}")
 pitcher_df = pitches_df[pitches_df['Pitcher'] == pitcher]
 batter_df = pitches_df[pitches_df['Batter'] == batter]
 
-recent_rows = pitcher_df[pitcher_df['TaggedPitchType'] != 'Undefined'].sort_values(by='UTCDateTime', ascending=False).head(500)
+recent_rows = pitcher_df[pitcher_df['PitchType'] != 'Undefined'].sort_values(by='UTCDateTime', ascending=False).head(500)
 
 if st.session_state["previous_batter"] != batter or st.session_state["previous_pitcher"] != pitcher:
     st.session_state["selected_pitch"] = None
@@ -321,8 +325,8 @@ pitch_type_counts = recent_rows['TaggedPitchType'].value_counts()
 qualifying_pitch_types = pitch_type_counts[pitch_type_counts >= 0.01 * len(recent_rows)].index.tolist()
 
 pitch_types = (
-    recent_rows[recent_rows['TaggedPitchType'].isin(qualifying_pitch_types)]
-    .groupby('TaggedPitchType')
+    recent_rows[recent_rows['PitchType'].isin(qualifying_pitch_types)]
+    .groupby('PitchType')
     .size()
     .sort_values(ascending=False)
     .index.tolist()
