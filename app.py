@@ -24,14 +24,23 @@ import warnings
 warnings.filterwarnings('ignore')
 
 @st.cache_data
+import gdown
+import pandas as pd
+import helper_functions as hf
+
 def load_data():
-    url = "https://drive.google.com/file/d/1OfJoS6nEOHDaIJlnNt-4Qj3Jj3npPhHR/view?usp=sharing"
+    file_id = "1OfJoS6nEOHDaIJlnNt-4Qj3Jj3npPhHR"
+    url = f"https://drive.google.com/uc?id={file_id}"
     output = "all_pitches.csv"
+
     gdown.download(url, output, quiet=False)
-    pitches_df = pd.read_csv(output) 
+    pitches_df = pd.read_csv(output)
     global_means = pd.read_csv("global_means.csv")
+
     pitches_df = hf.prepare_data(pitches_df, game_only=False)
+    
     return pitches_df, global_means
+
 
 @st.cache_resource
 def load_models():
