@@ -9,35 +9,12 @@ from sklearn.cluster import KMeans
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from itertools import product
-from scipy.ndimage import gaussian_filter
-from itertools import product
-import matplotlib.gridspec as gridspec
-import matplotlib.colors as mcolors
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-import os
-from fpdf import FPDF
 import joblib
-from datetime import datetime
-import plotly.express as px
-import plotly.graph_objects as go
 import helper_functions as hf
 from constants import(
     platoon_state_mapping,
-    side_buckets,
-    height_buckets,
     count_values,
-    num_clusters,
-    numerical_features,
-    pseudo_sample_size,
     median_features,
-    columns_to_keep
 )
 import warnings
 warnings.filterwarnings('ignore')
@@ -357,22 +334,6 @@ for i, pitch in enumerate(sorted_pitch_types):
         if st.button(pitch, key=f"pitch_{pitch}"):
             st.session_state["selected_pitch"] = pitch
 
-st.title("Select a Pitch Call")
-pitch_calls = ["Ball", "Called Strike", "Swinging Strike", "Foul", "In Play"]
-columns = st.columns(len(pitch_calls), gap="large")
-
-for i, pitch_call in enumerate(pitch_calls):
-    with columns[i]:
-        if st.button(pitch_call, key=f"pitch_call_{pitch_call}"):
-            if pitch_call == "In Play":
-                st.session_state["selected_pitch"] = None
-                st.session_state["selected_pitch_call"] = None
-                st.session_state["selected_zone"] = None
-                if "prev_pitch" in st.session_state:
-                    del st.session_state["prev_pitch"]            
-            else:
-                st.session_state["selected_pitch_call"] = pitch_call
-
 side_buckets = np.array([-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8])
 height_buckets = np.array([0.6, 1.2, 1.8, 2.4, 3, 3.6, 4.2])[::-1]
 
@@ -415,6 +376,22 @@ for i in range(7):
         with columns[j]:
             if st.button(f"", key=f"zone_{zone_id}"):
                 st.session_state["selected_zone"] = zone_id
+
+st.title("Select a Pitch Call")
+pitch_calls = ["Ball", "Called Strike", "Swinging Strike", "Foul", "In Play"]
+columns = st.columns(len(pitch_calls), gap="large")
+
+for i, pitch_call in enumerate(pitch_calls):
+    with columns[i]:
+        if st.button(pitch_call, key=f"pitch_call_{pitch_call}"):
+            if pitch_call == "In Play":
+                st.session_state["selected_pitch"] = None
+                st.session_state["selected_pitch_call"] = None
+                st.session_state["selected_zone"] = None
+                if "prev_pitch" in st.session_state:
+                    del st.session_state["prev_pitch"]            
+            else:
+                st.session_state["selected_pitch_call"] = pitch_call
 
 if st.session_state["selected_pitch"]:
     st.subheader("Selected Pitch Type")
