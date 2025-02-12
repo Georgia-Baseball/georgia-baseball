@@ -85,7 +85,7 @@ model_keys = [
     'Right_PitchGroup_0', 'Right_PitchGroup_1', 'Right_PitchGroup_2'
 ]
 
-pseudo_sample_size = 25
+pseudo_sample_size = 50
 
 rv_features = ['RelSpeed', 'SpinRate', 'SpinAxis', 'RelHeight', 'RelSide', 'Extension', 
             'PlateLocSideBucket', 'PlateLocHeightBucket', 'ax0', 'ay0', 'az0', 
