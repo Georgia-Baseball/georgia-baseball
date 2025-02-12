@@ -78,13 +78,11 @@ def simulate_synthetic_dataframe(recent_rows, batter_df, pitch_type, balls, stri
         .iloc[0]['BatterLeagueEncoded']
     )
 
-    recent_rows = recent_rows.sort_values(by='UTCDateTime', ascending=False).head(100)
-
-    medians = recent_rows[recent_rows['TaggedPitchType'] == pitch_type][median_features].median().to_dict()
+    medians = recent_rows[recent_rows['TaggedPitchType'] == pitch_type].sort_values(by='UTCDateTime', ascending=False)[median_features].median().to_dict()
 
     for feature, median_value in medians.items():
         synthetic_data[feature] = median_value
-
+    
     pitch_group_mode = recent_rows.loc[recent_rows['PitchType'] == pitch_type, 'PitchGroupEncoded'].mode()[0]
     synthetic_data['PitchGroupEncoded'] = pitch_group_mode
 
@@ -206,7 +204,7 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
         mean_value = rank_df['ExpectedRunValue'].mean()
 
         if pitch_type in ['Fastball', 'Sinker']:
-                mean_value -= ((balls - strikes) + 1) * 0.01
+                mean_value -= ((balls - strikes) + 1) * 0.005
             
         pitch_type_means.append((pitch_type, mean_value))
 
@@ -254,6 +252,7 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
 
                 command_score = pitch_command_dict.get(pitch_type, 1)
                 sigma = (max(0.25, min(command_score, 2)) * (0.6 + ((balls - strikes) * 0.1)))
+
                 smoothed_weighted_data = gaussian_filter(heatmap_data, sigma=sigma)
                 smoothed_weighted_data = smoothed_weighted_data[1:-1, 1:-1]
 
@@ -435,7 +434,7 @@ if st.button("Generate Heatmaps"):
     if is_first_time or st.session_state["selected_zone"] is None:
         st.session_state["balls"] = 0
         st.session_state["strikes"] = 0
-        st.title("Count: 0-0")
+        st.markdown("<h2 style='text-align: center;'>Count: 0-0</h2>", unsafe_allow_html=True)
         generate_individual_figs(recent_rows, batter_df, rv_model, balls=st.session_state["balls"], strikes=st.session_state["strikes"])
     else:
         recent_rows['prev_pitch'] = True
@@ -471,5 +470,8 @@ if st.button("Generate Heatmaps"):
         elif selected_pitch_call in ['Called Strike', 'Swinging Strike', 'Foul']:
             st.session_state["strikes"] = min(st.session_state["strikes"] + 1, 2)
 
-        st.title(f"Count: {st.session_state['balls']}-{st.session_state['strikes']}")
+        st.markdown(
+            f"<h1 style='text-align: center;'>Count: {st.session_state['balls']}-{st.session_state['strikes']}</h1>",
+            unsafe_allow_html=True
+        )
         generate_individual_figs(recent_rows, batter_df, prev_pitch_model, balls=st.session_state["balls"], strikes=st.session_state["strikes"])
