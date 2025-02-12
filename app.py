@@ -24,10 +24,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 @st.cache_data
-import gdown
-import pandas as pd
-import helper_functions as hf
-
 def load_data():
     file_id = "1OfJoS6nEOHDaIJlnNt-4Qj3Jj3npPhHR"
     url = f"https://drive.google.com/uc?id={file_id}"
