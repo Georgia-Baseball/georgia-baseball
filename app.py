@@ -10,11 +10,14 @@ import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 import joblib
+from sklearn.preprocessing import StandardScaler
 import helper_functions as hf
 from constants import(
     platoon_state_mapping,
     count_values,
     median_features,
+    cluster_features,
+    numerical_features
 )
 import warnings
 warnings.filterwarnings('ignore')
@@ -27,13 +30,14 @@ def load_data():
     return pitches_df, global_means
 
 @st.cache_resource
-def load_model():
+def load_models():
     rv_model = joblib.load("rv_model.pkl")
     prev_pitch_model = joblib.load("prev_pitch_model.pkl")
-    return rv_model, prev_pitch_model
+    scaler = joblib.load("scaler.pkl")
+    return rv_model, prev_pitch_model, scaler
 
 pitches_df, global_means = load_data()
-rv_model, prev_pitch_model = load_model()
+rv_model, prev_pitch_model, scaler = load_models()
 
 star_ratings = [
     (-0.045, "★★★★★"), (-0.035, "★★★★☆"), (-0.025, "★★★☆☆"),
@@ -74,9 +78,9 @@ def simulate_synthetic_dataframe(recent_rows, batter_df, pitch_type, balls, stri
         .iloc[0]['BatterLeagueEncoded']
     )
 
-    recent_rows = recent_rows.sort_values(by='UTCDateTime', ascending=False).head(500)
+    recent_rows = recent_rows.sort_values(by='UTCDateTime', ascending=False).head(100)
 
-    medians = recent_rows[median_features].median().to_dict()
+    medians = recent_rows[recent_rows['TaggedPitchType'] == pitch_type][median_features].median().to_dict()
 
     for feature, median_value in medians.items():
         synthetic_data[feature] = median_value
@@ -84,7 +88,7 @@ def simulate_synthetic_dataframe(recent_rows, batter_df, pitch_type, balls, stri
     pitch_group_mode = recent_rows.loc[recent_rows['PitchType'] == pitch_type, 'PitchGroupEncoded'].mode()[0]
     synthetic_data['PitchGroupEncoded'] = pitch_group_mode
 
-    if not is_first_time:
+    if not is_first_time and st.session_state['selected_zone'] is not None:
         synthetic_data['prev_pitch_RelSpeed'] = recent_rows['prev_pitch_RelSpeed']
         synthetic_data['prev_pitch_HorzBreak'] = recent_rows['prev_pitch_HorzBreak']
         synthetic_data['prev_pitch_InducedVertBreak'] = recent_rows['prev_pitch_InducedVertBreak']
@@ -109,6 +113,9 @@ def calculate_batter_metrics(synthetic_df, batter_df):
     synthetic_df['PlateLocSide'] = (synthetic_df['PlateLocSideBucket'].astype(float))
     synthetic_df['PlateLocHeight'] = (synthetic_df['PlateLocHeightBucket'].astype(float))
 
+    scaled_columns = [f"{feature}_Scaled" for feature in numerical_features]
+    synthetic_df[scaled_columns] = scaler.transform(synthetic_df[numerical_features])
+
     synthetic_df = hf.add_probabilities(synthetic_df)
     batter_df = hf.add_probabilities(batter_df[batter_df['PitcherThrows'] == pitcher_throws])
 
@@ -118,6 +125,7 @@ def calculate_batter_metrics(synthetic_df, batter_df):
 
     synthetic_df['BatterId'] = batter_id
     synthetic_df['Model'] = pitcher_throws
+
     synthetic_df = hf.compute_batter_stuff_value(synthetic_df, pivoted_values)
 
     return synthetic_df
@@ -160,7 +168,6 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
     )
 
     pitch_type_means = []
-    pitch_usage = []
     pitch_command = []
 
     for pitch_type in pitch_types:
@@ -206,7 +213,7 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
         pitch_type_means_dict = dict(pitch_type_means)
         pitch_command_dict = dict(pitch_command)
 
-        sorted_pitch_types = sorted(pitch_type_means_dict, key=pitch_type_means_dict.get)[:5]
+        sorted_pitch_types = sorted(pitch_type_means_dict, key=pitch_type_means_dict.get)[:6]
 
     for i in range(0, len(sorted_pitch_types), 2):
         cols = st.columns(2)
@@ -219,10 +226,9 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
                     synthetic_df = simulate_synthetic_dataframe(recent_rows, batter_df, pitch_type, balls, strikes)
                     synthetic_df['Year'] = 2024
                     synthetic_df = calculate_batter_metrics(synthetic_df, batter_df)
-                    st.session_state['synthetic_data'] = synthetic_df
+                    st.session_state[f'synthetic_data_{pitch_type}'] = synthetic_df
                 else:
-                    synthetic_df = st.session_state['synthetic_data']
-
+                    synthetic_df = st.session_state[f'synthetic_data_{pitch_type}']
                 expected_features = rv_model.get_booster().feature_names
                 model_df = synthetic_df[expected_features]
                 model_df['ExpectedRunValue'] = rv_model.predict(model_df)
@@ -247,8 +253,7 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
                 )
 
                 command_score = pitch_command_dict.get(pitch_type, 1)
-                sigma = (max(0.25, min(command_score, 2)) * (0.5 + ((balls - strikes) * 0.1)))
-
+                sigma = (max(0.25, min(command_score, 2)) * (0.6 + ((balls - strikes) * 0.1)))
                 smoothed_weighted_data = gaussian_filter(heatmap_data, sigma=sigma)
                 smoothed_weighted_data = smoothed_weighted_data[1:-1, 1:-1]
 
@@ -280,8 +285,8 @@ if "previous_pitcher" not in st.session_state:
 pitchers = pitches_df['Pitcher'].unique()
 batters = pitches_df['Batter'].unique()
 
-default_pitcher = "Skenes, Paul"
-default_batter = "Crews, Dylan"
+default_pitcher = "Smith, Kolten"
+default_batter = "Phelps, Tre"
 
 pitcher_index = list(pitchers).index(default_pitcher) if default_pitcher in pitchers else 0
 batter_index = list(batters).index(default_batter) if default_batter in batters else 0
@@ -406,6 +411,8 @@ if st.session_state["selected_zone"]:
     selected_x, selected_y = zone_positions[selected_id]
     st.subheader("Selected Zone Coordinates")
     st.write(f"**Zone Coordinates:** x = {selected_x}, y = {selected_y}")
+else:
+    st.session_state["selected_zone"] = None
 
 if "prev_pitch" not in st.session_state:
     st.session_state["prev_pitch"] = {}
@@ -425,7 +432,7 @@ if st.button("Generate Heatmaps"):
     if "strikes" not in st.session_state:
         st.session_state["strikes"] = 0
 
-    if is_first_time:
+    if is_first_time or st.session_state["selected_zone"] is None:
         st.session_state["balls"] = 0
         st.session_state["strikes"] = 0
         st.title("Count: 0-0")
