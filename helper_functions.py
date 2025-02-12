@@ -56,7 +56,7 @@ def clean_data(pitches_df, game_only=False):
         
         pitches_df = pitches_df[(pitches_df['PitcherTeam'] != 'GEO_PRA') & (pitches_df['BatterTeam'] != 'GEO_PRA')]
 
-    pitches_df = pitches_df[(pitches_df['Level'] == 'D1') | (pitches_df['Level'] == 'TeamExclusive')]
+    pitches_df = pitches_df[(pitches_df['Level'] == 'D1') | (pitches_df['Level'] == 'TeamExclusive') | (pitches_df['Level'] == 'D3')]
 
     pitches_df = pitches_df[(pitches_df['Balls'] <= 3) & (pitches_df['Strikes'] <= 2)]
     pitches_df = pitches_df[pitches_df['PitcherThrows'].isin(['Left', 'Right'])]
@@ -322,7 +322,7 @@ def bucketize_plate_locations(pitches_df):
     return pitches_df
 
 
-def scale_data(pitches_df):
+def scale_data(pitches_df, save=False):
     pitches_df['BatterLefty'] = (pitches_df['BatterSide'] == 'Left').astype(int)
     pitches_df['PitcherLefty'] = (pitches_df['PitcherThrows'] == 'Left').astype(int)
 
@@ -331,6 +331,9 @@ def scale_data(pitches_df):
     scaler = StandardScaler()
     scaled_columns = [f"{feature}_Scaled" for feature in numerical_features]
     pitches_df[scaled_columns] = scaler.fit_transform(pitches_df[numerical_features])
+
+    if save:
+        joblib.dump(scaler, "scaler.pkl")
 
     return pitches_df
 
@@ -341,10 +344,53 @@ def prepare_data(pitches_df, game_only=False):
 
     pitches_df = apply_batted_ball_model(pitches_df)
     pitches_df = encode_vars(pitches_df)
-    pitches_df = add_fastball_specs(pitches_df)
 
+    pitches_df = add_fastball_specs(pitches_df)
     pitches_df = bucketize_plate_locations(pitches_df)
+
     pitches_df = scale_data(pitches_df)
+
+    return pitches_df
+
+
+def add_prev_pitch(pitches_df):
+    pitches_df = pitches_df.sort_values(by=['Date', 'PitcherId', 'BatterId', 'PA_ID', 'PitchNo'])
+
+    pitches_df['prev_pitch'] = (
+        (pitches_df['PitchNo'] == pitches_df['PitchNo'].shift(-1) - 1) &
+        (pitches_df['Date'] == pitches_df['Date'].shift(-1)) &
+        (pitches_df['PitcherId'] == pitches_df['PitcherId'].shift(-1)) &
+        (pitches_df['BatterId'] == pitches_df['BatterId'].shift(-1)) &
+        (pitches_df['PA_ID'] == pitches_df['PA_ID'].shift(-1))
+    )
+
+    pitches_df['prev_pitch'] = pitches_df['prev_pitch'].shift(1)
+
+    pitches_df['prev_pitch_RelSpeed'] = pitches_df['RelSpeed'].shift(1)
+    pitches_df['prev_pitch_HorzBreak'] = pitches_df['HorzBreak'].shift(1)
+    pitches_df['prev_pitch_InducedVertBreak'] = pitches_df['InducedVertBreak'].shift(1)
+    pitches_df['prev_pitch_PlateLocSideBucket'] = pitches_df['PlateLocSideBucket'].shift(1)
+    pitches_df['prev_pitch_PlateLocHeightBucket'] = pitches_df['PlateLocHeightBucket'].shift(1)
+    pitches_df['prev_pitch_PitchCall'] = pitches_df['PitchCall'].shift(1)
+    pitches_df['prev_pitch_PitchType'] = pitches_df['PitchType'].shift(1)
+
+    pitches_df['prev_pitch_PitchCall'] = pitches_df['prev_pitch_PitchCall'].apply(
+        lambda x: 0 if x in ['BallCalled', 'BallinDirt'] else
+        1 if x == 'StrikeCalled' else
+        2 if x == 'StrikeSwinging' else
+        3 if x in ['FoulBall', 'FoulBallNotFieldable', 'FoulBallFieldable'] else
+        4
+    )
+
+    pitches_df['prev_pitch_SamePitch'] = (pitches_df['PitchType'] == pitches_df['prev_pitch_PitchType']).astype(int)
+
+    prev_pitch_invalid = pitches_df['prev_pitch'].isna() | (pitches_df['prev_pitch'] == False)
+
+    columns_to_update = [
+        'prev_pitch_RelSpeed', 'prev_pitch_HorzBreak', 'prev_pitch_InducedVertBreak',
+        'prev_pitch_PlateLocSideBucket', 'prev_pitch_PlateLocHeightBucket', 'prev_pitch_PitchCall', 'prev_pitch_SamePitch'
+    ]
+    pitches_df[columns_to_update] = pitches_df[columns_to_update].where(~prev_pitch_invalid, np.nan)
 
     return pitches_df
 
@@ -393,13 +439,6 @@ def load_gmm_models():
 def add_probabilities(pitches_df):
     gmm_models = load_gmm_models()
 
-    scaled_columns = [f"{feature}_Scaled" for feature in numerical_features]
-
-    pitches_df = pitches_df.reset_index()
-
-    scaler = StandardScaler()
-    pitches_df[scaled_columns] = scaler.fit_transform(pitches_df[numerical_features])
-
     prob_dfs = []
 
     pitches_df = pitches_df[pitches_df['PitcherThrows'].isin(['Left', 'Right'])]
@@ -415,6 +454,7 @@ def add_probabilities(pitches_df):
 
         group_indices = group.index
 
+        scaled_columns = [f"{feature}_Scaled" for feature in numerical_features]
         scaled_data = pitches_df.loc[group_indices, scaled_columns]
 
         probabilities = gmm.predict_proba(scaled_data)
