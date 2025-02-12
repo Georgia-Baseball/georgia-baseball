@@ -21,9 +21,10 @@ from constants import(
     numerical_features
 )
 import warnings
+import time
 warnings.filterwarnings('ignore')
 
-@st.cache_data
+@st.cache_data(ttl=900)
 def load_data():
     file_id = "1va1he-5-8sHF0UEM05dp-9bi9R2XN2kg"
     url = f"https://drive.google.com/uc?id={file_id}"
@@ -44,8 +45,7 @@ def load_data():
 
     return pitches_df, global_means
 
-
-@st.cache_resource
+@st.cache_resource(ttl=900)
 def load_models():
     rv_model = joblib.load("rv_model.pkl")
     prev_pitch_model = joblib.load("prev_pitch_model.pkl")
