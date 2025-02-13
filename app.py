@@ -256,7 +256,7 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
                 command_score = pitch_command_dict.get(pitch_type, 1)
 
                 if len(recent_rows[recent_rows['PitchType'] == pitch_type]) >= 20:
-                    sigma = (max(0.25, min(command_score, 2)) * (0.6 + ((balls - strikes) * 0.1)))
+                    sigma = (max(0.25, min(command_score, 2)) * (0.5 + ((balls - strikes) * 0.1)))
                 else: 
                     sigma = 0.8 + ((balls - strikes) * 0.1)
 
