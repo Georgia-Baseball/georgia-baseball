@@ -298,7 +298,7 @@ def map_ids_to_names(pitches_df, id_list, id_column, name_column):
 
     # Convert each nested list of IDs to names
     names_list = [
-        [id_to_name.get(float(bid), f"Unknown_{bid}") for bid in group] for group in id_list
+        [id_to_name.get(float(bid), f"{bid}") for bid in group] for group in id_list
     ]
     
     return names_list
