@@ -10,9 +10,10 @@ import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 import joblib
-import gdown
 from sklearn.preprocessing import StandardScaler
 import helper_functions as hf
+import warnings
+import time
 from constants import(
     platoon_state_mapping,
     count_values,
@@ -20,25 +21,11 @@ from constants import(
     cluster_features,
     numerical_features
 )
-import warnings
-import time
 warnings.filterwarnings('ignore')
 
 @st.cache_data(ttl=900)
 def load_data():
-    file_id = "1va1he-5-8sHF0UEM05dp-9bi9R2XN2kg"
-    url = f"https://drive.google.com/uc?id={file_id}"
-    output = "all_pitches.csv"
-
-    gdown.download(url, output, quiet=False)
-
-    chunk_list = []
-    chunk_size = 100000
-
-    for chunk in pd.read_csv(output, chunksize=chunk_size):
-        chunk_list.append(chunk)
-
-    pitches_df = pd.concat(chunk_list, ignore_index=True)
+    pitches_df = pd.read_csv('app_data.csv')
     global_means = pd.read_csv("global_means.csv")
 
     pitches_df = hf.prepare_data(pitches_df, game_only=False)
@@ -301,17 +288,73 @@ if "previous_batter" not in st.session_state:
 if "previous_pitcher" not in st.session_state:
     st.session_state["previous_pitcher"] = None
 
-pitchers = pitches_df['Pitcher'].unique()
-batters = pitches_df['Batter'].unique()
+def map_ids_to_names(pitches_df, id_list, id_column, name_column):
+    """Convert nested ID lists into names based on the most common name in pitches_df."""
+    id_to_name = (
+        pitches_df.groupby(id_column)[name_column]
+        .agg(lambda x: x.mode()[0] if not x.mode().empty else None)
+        .to_dict()
+    )
 
-default_pitcher = "Smith, Kolten"
-default_batter = "Phelps, Tre"
+    # Convert each nested list of IDs to names
+    names_list = [
+        [id_to_name.get(float(bid), f"Unknown_{bid}") for bid in group] for group in id_list
+    ]
+    
+    return names_list
 
-pitcher_index = list(pitchers).index(default_pitcher) if default_pitcher in pitchers else 0
-batter_index = list(batters).index(default_batter) if default_batter in batters else 0
 
-pitcher = st.selectbox("Select Pitcher:", options=pitchers, index=pitcher_index)
-batter = st.selectbox("Select Batter:", options=batters, index=batter_index)
+### PUT PITCHER IDS AND BATTER IDS HERE
+pitchers = [
+            [823227, 1000121636], #J.C. Franconere           
+            [1000230356], ### Jack Kabel
+            [230080, 10271156], ### Matt Alduino
+            [809714, 1000096939], ### Sam Ametrano
+            [10108199], ### Austin Ludwig?
+            [1000120926], ### Mason Ulsh
+            [810069], ### Josh Lajoie
+            [822480, 1000123002], ### Ryan O’Connell
+            [1000120931], ### Ryan Hutchinson
+            [1000113633], ### Griffin Seibel
+            [1000236632], ### Mike Poncini
+            [1000149820, 10061707], ### Jack Gannon
+            [10109546], ### James Fahan
+            [1000236633] ### Andrew Rubayo
+]
+
+batters = [
+            [1000069469, 695773,1000391664,1000390931], ### Obee
+            [804569, 1000133791], ### Phelps
+            [695477, 1000052101], ### Alford
+            [803325, 1000051217], ### Adams
+            [1000107443, 702705], ### Branch
+            [1000076894, 802001], ### Hunter
+            [10000375, 1000236751], ### Hudson
+            [1000255777], ### Clavon
+            [1000077433], ### Jones
+            [823754, 1000119891], ### Burnett
+            [1000013128, 687408], ### Goldstein
+            [1000051145, 695301], ### Zabo
+            [1000255611], ### Brown
+            [1000257371, 1000061901], ### Mccarthy
+            [1000075636], ###Saxon
+            [90000255731, 828714], ### Jackson
+            [274214, 1000232995], ### Black
+            [812837, 1000190766], ### King
+            [1000209296] ### Parker
+]
+
+pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
+batter_names = map_ids_to_names(pitches_df, batters, 'BatterId', 'Batter')
+
+default_pitcher = pitcher_names[0]
+default_batter = batter_names[0]
+
+pitcher_index = list(pitchers).index(default_pitcher) if default_pitcher in pitcher_names else 0
+batter_index = list(batters).index(default_batter) if default_batter in batter_names else 0
+
+pitcher = st.selectbox("Select Pitcher:", options=pitcher_names, index=pitcher_index)
+batter = st.selectbox("Select Batter:", options=batter_names, index=batter_index)
 
 st.write(f"Selected Pitcher: {pitcher}")
 st.write(f"Selected Batter: {batter}")
