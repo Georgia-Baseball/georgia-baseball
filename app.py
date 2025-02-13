@@ -347,11 +347,11 @@ batters = [
 pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
 batter_names = map_ids_to_names(pitches_df, batters, 'BatterId', 'Batter')
 
-default_pitcher = pitcher_names[0]
-default_batter = batter_names[0]
+default_pitcher = pitcher_names[0][0] if pitcher_names and pitcher_names[0] else None
+default_batter = batter_names[0][0] if batter_names and batter_names[0] else None
 
-pitcher_index = list(pitchers).index(default_pitcher) if default_pitcher in pitcher_names else 0
-batter_index = list(batters).index(default_batter) if default_batter in batter_names else 0
+pitcher_index = next((i for i, group in enumerate(pitcher_names) if default_pitcher in group), 0)
+batter_index = next((i for i, group in enumerate(batter_names) if default_batter in group), 0)
 
 pitcher = st.selectbox("Select Pitcher:", options=pitcher_names, index=pitcher_index)
 batter = st.selectbox("Select Batter:", options=batter_names, index=batter_index)
