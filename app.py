@@ -290,16 +290,18 @@ if "previous_pitcher" not in st.session_state:
 
 def map_ids_to_names(pitches_df, id_list, id_column, name_column):
     """Convert nested ID lists into names based on the most common name in pitches_df."""
-    id_to_name = (
-        pitches_df.groupby(id_column)[name_column]
-        .agg(lambda x: x.mode()[0] if not x.mode().empty else None)
-        .to_dict()
-    )
-
-    names_list = [
-        [id_to_name.get(float(bid)) for bid in group if float(bid) in id_to_name]
-        for group in id_list
-    ]
+    names_list = []
+    
+    for group in id_list:
+        # Filter the dataframe where ID is in the group
+        filtered_df = pitches_df[pitches_df[id_column].isin(group)]
+        
+        if not filtered_df.empty:
+            # Find the most common name
+            common_name = filtered_df[name_column].mode()
+            names_list.append([common_name[0]] if not common_name.empty else [])
+        else:
+            names_list.append([])  # Empty if no matching rows
     
     return names_list
 
