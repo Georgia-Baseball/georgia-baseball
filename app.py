@@ -306,42 +306,30 @@ def map_ids_to_names(pitches_df, id_list, id_column, name_column):
 
 ### PUT PITCHER IDS AND BATTER IDS HERE
 pitchers = [
-            [823227, 1000121636], #J.C. Franconere           
-            [1000230356], ### Jack Kabel
-            [230080, 10271156], ### Matt Alduino
-            [809714, 1000096939], ### Sam Ametrano
-            [10108199], ### Austin Ludwig?
-            [1000120926], ### Mason Ulsh
-            [810069], ### Josh Lajoie
-            [822480, 1000123002], ### Ryan O’Connell
-            [1000120931], ### Ryan Hutchinson
-            [1000113633], ### Griffin Seibel
-            [1000236632], ### Mike Poncini
-            [1000149820, 10061707], ### Jack Gannon
-            [10109546], ### James Fahan
-            [1000236633] ### Andrew Rubayo
+            [803287, 1000110595], ### PITCHER 1
+            [701368, 1000187635], ### PITCHER 2
+            [1000121636], ### PITCHER 3
+            [815124, 1000122824], ### PITCHER 4
+            [1000127884], ### PITCHER 5
+            [90000235966], ### PITCHER 6
+            [1000051331, 809709], ### PITCHER 7
+            [823229, 1000132878], ### PITCHER 8
+            [804607, 1000050067], ### PITCHER 9
+            [809712, 1000066681] ### PITCHER 10
 ]
 
+### PUT BATTER IDS HERE
 batters = [
-            [1000069469, 695773,1000391664,1000390931], ### Obee
-            [804569, 1000133791], ### Phelps
-            [695477, 1000052101], ### Alford
-            [803325, 1000051217], ### Adams
-            [1000107443, 702705], ### Branch
-            [1000076894, 802001], ### Hunter
-            [10000375, 1000236751], ### Hudson
-            [1000255777], ### Clavon
-            [1000077433], ### Jones
-            [823754, 1000119891], ### Burnett
-            [1000013128, 687408], ### Goldstein
-            [1000051145, 695301], ### Zabo
-            [1000255611], ### Brown
-            [1000257371, 1000061901], ### Mccarthy
-            [1000075636], ###Saxon
-            [90000255731, 828714], ### Jackson
-            [274214, 1000232995], ### Black
-            [812837, 1000190766], ### King
-            [1000209296] ### Parker
+            [695477, 1000052101], ### BATTER 1
+            [809707, 1000133690], ### BATTER 2
+            [702705, 1000107443], ### BATTER 3
+            [692232, 1000064202], ### BATTER 4
+            [687408, 1000013128], ### BATTER 5
+            [699821, 1000079889], ### BATTER 6
+            [690970], ### BATTER 7
+            [802119, 1000073064], ### BATTER 8
+            [804569, 1000133791], ### BATTER 9
+            [674890, 1000051139] ### BATTER 10
 ]
 
 pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
