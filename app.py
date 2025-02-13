@@ -353,8 +353,8 @@ default_batter = batter_names[0][0] if batter_names and batter_names[0] else Non
 pitcher_index = next((i for i, group in enumerate(pitcher_names) if default_pitcher in group), 0)
 batter_index = next((i for i, group in enumerate(batter_names) if default_batter in group), 0)
 
-pitcher = st.selectbox("Select Pitcher:", options=pitcher_names, index=pitcher_index)
-batter = st.selectbox("Select Batter:", options=batter_names, index=batter_index)
+pitcher = st.selectbox("Select Pitcher:", options=[name[0] for name in pitcher_names if name], index=0)
+batter = st.selectbox("Select Batter:", options=[name[0] for name in batter_names if name], index=0)
 
 st.write(f"Selected Pitcher: {pitcher}")
 st.write(f"Selected Batter: {batter}")
