@@ -336,8 +336,7 @@ batters = [
 
 pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
 batter_names = map_ids_to_names(pitches_df, batters, 'BatterId', 'Batter')
-st.write(pitcher_names)
-st.write(batter_names)
+
 default_pitcher = pitcher_names[0][0] if pitcher_names and pitcher_names[0] else None
 default_batter = batter_names[0][0] if batter_names and batter_names[0] else None
 
