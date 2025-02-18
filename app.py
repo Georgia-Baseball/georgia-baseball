@@ -338,48 +338,26 @@ pitchers = [
 
 ### PUT BATTER IDS HERE
 batters = [
-            [1000069373, 1000134744], ### Bryan Arendt
-            #[804569, 1000133791], ### JT Stiner
-            #[695477, 1000052101], ### Josh Martinez
-            [1000191978], ### Martin Zelenka
-            #[1000107443, 702705], ### Mason Hughes
-            #[1000076894, 802001], ### Trevor Lucas
-            [703482, 10062529], ### Brock Wills
-            [10031379], ### Tanner Thach
-            [10067084], ### Ryker Galaska
-            #[823754, 1000119891], ### Brady Thompson?
-            [10079957, 823979], ### Kyle Dobos?
-            [10089229, 823973], ### Dylan Schaefer
-            [238944], ### Kevin Jones
-            [823986, 10026659], ### Kevin Novobilsky
-            #[1000075636], ###Carver Pleasant?
-            [10013780], ### Will Tyrrell
-            [802468, 1000076006], ### Alec DeMartino
-            [1000123436, 10034330, 823977], ### Aiden Evans
-            #[1000209296], ### Nick Coggins
-            #[1000209296], ### BJ Brown
-            [10032328], ### Mac Gillespie
-            #[1000209296], ### Blake Crawford
-            #[1000209296], ### Cooper Allen?
-            [10118727, 823985], ### Bromley Thornton?
-            #[1000209296] ### Clay Masonis?
-            [1000120932], ### Sebastian Mueller
-            [1000221084], ### Christian Smith
-            #[695477, 1000052101], ### Cole Constable
-            #[1000191978], ### Jack Bryan
-            #[1000107443, 702705], ### Ian Nilsen
-            #[1000076894, 802001], ### Christian Nilsen
-            #[703482, 10062529], ### Johnny Knox
-            [10266904], ### Kyle Garbowski
-            #[10067084], ### Alex Irizarry
-            #[823754, 1000119891], ### Samuel Wright
-            [1000013608, 1000220080], ### CJ Willis
-            #[10089229, 823973], ### Matt Park
-            #[238944], ### Austin Ludwig?
-            [1000077059], ### Gabe Wright
-            #[1000075636], ### Sean McCulloch
-            [1000048977], ### Luke Zeisloft
-            [1000187279] ### James Marino
+            #[1000069469, 695773,1000391664,1000390931], ### Vidal Colon
+            [1000075143], ### Jackson Bessette
+            #[695477, 1000052101], ### Blake Cowans
+            #[803325, 1000051217], ### Brady Patterson
+            [1000235203], ### Jack Snyder
+            [1000115808], ### Thomas Curry
+            #[10000375, 1000236751], ### Colin Husko
+            #[1000255777], ### Christian Holmes
+            [10069733], ### AJ Taylor
+            #[823754, 1000119891], ### Alex Mezzetti
+            [10008685, 1000235233], ### DJ Butler
+            [1000099592], ### James Harris
+            #[1000255611], ### Will Flanigan
+            [1000268592], ### Pambos Nicoloudes
+            #[1000075636], ### Jonathan Fleaka
+            #[90000255731, 828714], ### Jake Troyner
+            #[274214, 1000232995], ### David Cox?
+            [1000114430], ### Terrick Thompson-Allen
+            #[1000209296], ### Lucas Smith
+            [1000074821, 804114] ### Luke Nowak
 ]
 
 pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
