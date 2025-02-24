@@ -256,7 +256,7 @@ def generate_individual_figs(recent_rows, batter_df, model, balls, strikes):
                 command_score = pitch_command_dict.get(pitch_type, 1)
 
                 if len(recent_rows[recent_rows['PitchType'] == pitch_type]) >= 20:
-                    sigma = (max(0.25, min(command_score, 2)) * (0.5 + ((balls - strikes) * 0.1)))
+                    sigma = (max(0.25, min(command_score, 2)) * (0.7 + ((balls - strikes) * 0.1)))
                 else: 
                     sigma = 0.8 + ((balls - strikes) * 0.1)
 
@@ -338,26 +338,41 @@ pitchers = [
 
 ### PUT BATTER IDS HERE
 batters = [
-            #[1000069469, 695773,1000391664,1000390931], ### Vidal Colon
-            [1000075143], ### Jackson Bessette
-            #[695477, 1000052101], ### Blake Cowans
-            #[803325, 1000051217], ### Brady Patterson
-            [1000235203], ### Jack Snyder
-            [1000115808], ### Thomas Curry
-            #[10000375, 1000236751], ### Colin Husko
-            #[1000255777], ### Christian Holmes
-            [10069733], ### AJ Taylor
-            #[823754, 1000119891], ### Alex Mezzetti
-            [10008685, 1000235233], ### DJ Butler
-            [1000099592], ### James Harris
-            #[1000255611], ### Will Flanigan
-            [1000268592], ### Pambos Nicoloudes
-            #[1000075636], ### Jonathan Fleaka
-            #[90000255731, 828714], ### Jake Troyner
-            #[274214, 1000232995], ### David Cox?
-            [1000114430], ### Terrick Thompson-Allen
-            #[1000209296], ### Lucas Smith
-            [1000074821, 804114] ### Luke Nowak
+            #[1000069469, 695773,1000391664,1000390931], ### Jaret Nelson
+            [1000036170], ### Robert Moya
+            #[695477, 1000052101], ### Jon Embury
+            #[803325, 1000051217], ### Sam McAleer
+            [1000051534], ### Mac Moise
+            [1000077137], ### Jason Roberts
+            [10092042], ### Javier Gorostola
+            #[1000255777], ### Keaton Kangas
+            [1000057922], ### Jake Mummau
+            #[823754, 1000119891], ### Tyler Herb
+            #[1000013128, 687408], ### Vincent Samuel
+            #[1000051145, 695301], ### EJ BURNS
+            [1000051529], ### Jake McKee
+            #[1000257371, 1000061901], ### Nathan Gagnon
+            #[1000075636], ## DJ Pirela
+            #[90000255731, 828714], ### Aidan Corn
+            #[274214, 1000232995], ### Connor Fosnow
+            [1000090899], ### Harrison Povey
+             #[1000069469, 695773,1000391664,1000390931], ### John Holley
+            [1000122764], ### Cole Griffith
+            [1000193114], ### Colin Hynek
+            [1000108237, 1000133232], ### Jesse Donohoe
+            #[1000107443, 702705], ### Carter Bailey
+            #[1000076894, 802001], ### Andon Lewis
+            #[10000375, 1000236751], ### William Maginnis
+            #[1000255777], ### Austin Sellers
+            #[1000077433], ### Brandon Davis
+            [1000128379, 824774], ### Nick Garagozzo
+            #[1000013128, 687408], ### CJ Blackwell
+            [1000091179], ### Jae Williams
+            #[1000255611], ### Cooper Milford
+            [1000198988, 90000255774], ### Michael Maginnis
+            #[1000075636], ## John Beverley
+            #[90000255731, 828714], ### Austin Killingsworth
+            [1000086400] ### Kaleb freeman
 ]
 
 pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
