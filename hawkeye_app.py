@@ -8,7 +8,7 @@ import warnings
 import matplotlib.patches as patches
 warnings.filterwarnings('ignore')
 
-PASSWORD = "roonies2025"
+PASSWORD = "ugabulldogs2025"
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
