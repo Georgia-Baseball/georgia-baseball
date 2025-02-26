@@ -136,6 +136,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
         
+filtered_data['RelSpeed'] = pd.to_numeric(filtered_data['RelSpeed'], errors='coerce')
+filtered_data['SpinRate'] = pd.to_numeric(filtered_data['SpinRate'], errors='coerce')
+
 pitch_counts = filtered_data['TaggedPitchType'].value_counts(normalize=True) * 100
 grouped_df = filtered_data.groupby('TaggedPitchType')[['RelSpeed', 'SpinRate', 'Tilt', 'RelHeight', 'RelSide', 'Extension', 'InducedVertBreak', 'HorzBreak']].mean()
 grouped_df.insert(0, 'Usage%', pitch_counts)
