@@ -206,7 +206,7 @@ with tab2:
     overall_pitch_data['TaggedPitchType'] = pd.Categorical(overall_pitch_data['TaggedPitchType'], categories=pitch_type_order, ordered=True)
     overall_pitch_data = overall_pitch_data.sort_values('TaggedPitchType')
 
-    st.write(f"<h3 style='text-align: center;'>{pitch_type}</h3>", unsafe_allow_html=True)
+    st.write(f"<h3 style='text-align: center;'>Pitch Usage</h3>", unsafe_allow_html=True)
 
     label_distance = 2
 
