@@ -51,7 +51,7 @@ def load_and_concat_csvs(directory):
 
 directory = "hawkeye_csvs"
 data = load_and_concat_csvs(directory)
-
+st.dataframe(data)
 st.sidebar.title("Filters")
 
 unique_pitchers = sorted(data['Pitcher'].unique(), key=lambda name: name.split()[-1])
@@ -135,12 +135,9 @@ st.markdown(
     f"<p style='text-align: center; font-size: 18px;'>{description_text}</p>",
     unsafe_allow_html=True,
 )
-        
-filtered_data['RelSpeed'] = pd.to_numeric(filtered_data['RelSpeed'], errors='coerce')
-filtered_data['SpinRate'] = pd.to_numeric(filtered_data['SpinRate'], errors='coerce')
 
 pitch_counts = filtered_data['TaggedPitchType'].value_counts(normalize=True) * 100
-grouped_df = filtered_data.groupby('TaggedPitchType')[['RelSpeed', 'SpinRate', 'Tilt', 'RelHeight', 'RelSide', 'Extension', 'InducedVertBreak', 'HorzBreak']].mean()
+grouped_df = filtered_data.groupby('TaggedPitchType')[['RelSpeed', 'SpinRate', 'RelHeight', 'RelSide', 'Extension', 'InducedVertBreak', 'HorzBreak']].mean()
 grouped_df.insert(0, 'Usage%', pitch_counts)
 grouped_df = grouped_df.fillna(0).round(1)
 grouped_df.reset_index(inplace=True)
