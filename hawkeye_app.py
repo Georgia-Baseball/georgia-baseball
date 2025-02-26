@@ -141,7 +141,6 @@ grouped_df = filtered_data.groupby('TaggedPitchType')[['RelSpeed', 'SpinRate', '
 grouped_df.insert(0, 'Usage%', pitch_counts)
 grouped_df = grouped_df.fillna(0).round(1)
 grouped_df.reset_index(inplace=True)
-st.dataframe(grouped_df)
 grouped_df = grouped_df.sort_values(by='Usage%', ascending=False)
 
 tab1, tab2 = st.tabs(["Pitch Data", "Pitch Usage"])
