@@ -206,10 +206,7 @@ with tab2:
     overall_pitch_data['TaggedPitchType'] = pd.Categorical(overall_pitch_data['TaggedPitchType'], categories=pitch_type_order, ordered=True)
     overall_pitch_data = overall_pitch_data.sort_values('TaggedPitchType')
 
-    st.markdown(
-        "<h1 style='text-align: center; font-size: 40px; font-weight: bold;'>Pitch Usage</h1>",
-        unsafe_allow_html=True,
-    )
+    st.write(f"<h3 style='text-align: center;'>{pitch_type}</h3>", unsafe_allow_html=True)
 
     label_distance = 2
 
@@ -299,6 +296,7 @@ with tab2:
 
     st.pyplot(plt.gcf())
     plt.close()
+    st.markdown("<br>", unsafe_allow_html=True)
 
     filtered_data = filtered_data.sort_values(['GameID', 'Inning', 'Top/Bottom', 'PAofInning', 'PitchofPA']).reset_index(drop=True)
     filtered_data['Times Through Lineup'] = (
