@@ -51,7 +51,7 @@ def load_and_concat_csvs(directory):
 
 directory = "hawkeye_csvs"
 data = load_and_concat_csvs(directory)
-st.dataframe(data)
+
 st.sidebar.title("Filters")
 
 unique_pitchers = sorted(data['Pitcher'].unique(), key=lambda name: name.split()[-1])
