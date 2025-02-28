@@ -936,8 +936,6 @@ else:
         unsafe_allow_html=True,
     )
 
-    st.dataframe(filtered_data)
-
     tab1, tab2 = st.tabs(["Game Logs", "Batter Hot Zones"])
             
     with tab1:
