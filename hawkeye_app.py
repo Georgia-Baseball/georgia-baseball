@@ -1152,3 +1152,5 @@ else:
         table.auto_set_font_size(False)
 
         st.pyplot(fig)
+    with tab2:
+        st.write("In the process of being built.")
