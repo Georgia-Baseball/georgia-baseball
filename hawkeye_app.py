@@ -1153,14 +1153,34 @@ else:
 
         st.pyplot(fig)
     with tab2:
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Swing Rate Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
         filtered_data['AdjPlateLocSide'] = filtered_data['PlateLocSide'] * -1
+
         fig, ax = plt.subplots(figsize=(4, 4))
-        sns.scatterplot(data=filtered_data, x='AdjPlateLocSide', y='PlateLocHeight', ax=ax)
+
+        sns.kdeplot(
+            data=filtered_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            hue='Swing', 
+            fill=True, 
+            levels=15, 
+            palette={1: 'red', 0: 'blue'},
+            alpha=0.5,
+            ax=ax
+        )
+
         ax.set_xlabel('')
         ax.set_ylabel('')
         ax.set_xlim(-2.5, 2.5)
         ax.set_ylim(0, 5)
+
         ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
         home_plate_coords = [
             (-0.9, 0.8), (0.9, 0.8),
             (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
@@ -1173,7 +1193,101 @@ else:
             linewidth=2
         )
         ax.add_patch(home_plate)
+
         ax.set_xticks([])
         ax.set_yticks([])
+
+        st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Whiff Rate Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+
+        filtered_data['Whiff'] = (filtered_data['PitchCall'] == 'StrikeSwinging').astype(int)
+
+        sns.kdeplot(
+            data=filtered_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            hue='Whiff', 
+            fill=True, 
+            levels=15, 
+            palette={1: 'red', 0: 'blue'},
+            alpha=0.5,
+            ax=ax
+        )
+
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(0, 5)
+
+        ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
+        home_plate_coords = [
+            (-0.9, 0.8), (0.9, 0.8),
+            (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
+        ]
+        home_plate = patches.Polygon(
+            home_plate_coords,
+            closed=True,
+            edgecolor='black',
+            facecolor='grey',
+            linewidth=2
+        )
+        ax.add_patch(home_plate)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Exit Velocity Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+
+        sns.kdeplot(
+            data=filtered_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            weights=filtered_data['ExitSpeed'],
+            fill=True, 
+            levels=15, 
+            cmap="coolwarm",
+            alpha=0.7,
+            ax=ax
+        )
+
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(0, 5)
+
+        ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
+        home_plate_coords = [
+            (-0.9, 0.8), (0.9, 0.8),
+            (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
+        ]
+        home_plate = patches.Polygon(
+            home_plate_coords,
+            closed=True,
+            edgecolor='black',
+            facecolor='grey',
+            linewidth=2
+        )
+        ax.add_patch(home_plate)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
         st.pyplot(fig)
         st.markdown("<br>", unsafe_allow_html=True)
