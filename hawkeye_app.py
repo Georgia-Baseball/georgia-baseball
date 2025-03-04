@@ -120,8 +120,9 @@ if selected_pitcher_or_batter == 'Pitcher':
         (pitcher_data['Date'] <= pd.Timestamp(selected_date_range[1]))
     ]
 
+    first_last_pitcher = " ".join(selected_pitcher.split(", ")[::-1])
     st.markdown(
-        f"<h1 style='text-align: center;'>{selected_pitcher}</h1>",
+        f"<h1 style='text-align: center;'>{first_last_pitcher}</h1>",
         unsafe_allow_html=True,
     )
 
@@ -921,8 +922,9 @@ else:
         (batter_data['Date'] <= pd.Timestamp(selected_date_range[1]))
     ]
 
+    first_last_batter = " ".join(selected_batter.split(", ")[::-1])
     st.markdown(
-        f"<h1 style='text-align: center;'>{selected_batter}</h1>",
+        f"<h1 style='text-align: center;'>{first_last_batter}</h1>",
         unsafe_allow_html=True,
     )
 
