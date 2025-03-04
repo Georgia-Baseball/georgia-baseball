@@ -64,7 +64,7 @@ selected_pitcher_or_batter = st.sidebar.selectbox(
 )
 
 if selected_pitcher_or_batter == 'Pitcher':
-    unique_pitchers = sorted(data['Pitcher'].unique(), key=lambda name: name.split()[-1])
+    unique_pitchers = sorted(data['Pitcher'].unique(), key=lambda name: name.split(",")[0].strip())
     selected_pitcher = st.sidebar.selectbox("Select a Pitcher", unique_pitchers)
 
     pitcher_data = data[data['Pitcher'] == selected_pitcher]
@@ -197,17 +197,32 @@ if selected_pitcher_or_batter == 'Pitcher':
         st.pyplot(fig)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        for pitch_type in pitcher_data['Pitch Type'].unique():
+        for pitch_type in pitcher_data['Pitch Type'].dropna().unique():
             st.write(f"<h3 style='text-align: center;'>{pitch_type}</h3>", unsafe_allow_html=True)
+            
             pitch_df = pitcher_data[pitcher_data['Pitch Type'] == pitch_type]
             pitch_df['AdjPlateLocSide'] = pitch_df['PlateLocSide'] * -1
+            
             fig, ax = plt.subplots(figsize=(4, 4))
-            sns.scatterplot(data=pitch_df, x='AdjPlateLocSide', y='PlateLocHeight', ax=ax)
+            
+            sns.kdeplot(
+                data=pitch_df,
+                x='AdjPlateLocSide',
+                y='PlateLocHeight',
+                fill=True,
+                cmap="Blues",
+                levels=50,
+                thresh=0.05,
+                ax=ax
+            )
+
             ax.set_xlabel('')
             ax.set_ylabel('')
             ax.set_xlim(-2.5, 2.5)
             ax.set_ylim(0, 5)
+
             ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
             home_plate_coords = [
                 (-0.9, 0.8), (0.9, 0.8),
                 (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
@@ -220,6 +235,7 @@ if selected_pitcher_or_batter == 'Pitcher':
                 linewidth=2
             )
             ax.add_patch(home_plate)
+
             ax.set_xticks([])
             ax.set_yticks([])
             st.pyplot(fig)
@@ -596,13 +612,14 @@ if selected_pitcher_or_batter == 'Pitcher':
             **{
                 'Batted Balls': ('Batted Balls', 'sum'),
                 'Avg EV': ('ExitSpeed', lambda x: x.mean().round(1)),
+                'Max EV': ('ExitSpeed', lambda x: x.max().round(1)),
                 'Avg LA': ('Angle', lambda x: x.mean().round(1)),
                 'Hard Hit%': ('Hard Hit', lambda x: (x.mean() * 100).round(1)),
                 'Sweet Spot%': ('Sweet Spot', lambda x: (x.mean() * 100).round(1))
             }
         ).reset_index()
 
-        result = result[['Pitch Type', 'Batted Balls', 'Avg EV', 'Avg LA', 'Hard Hit%', 'Sweet Spot%']]
+        result = result[['Pitch Type', 'Batted Balls', 'Avg EV', 'Max EV', 'Avg LA', 'Hard Hit%', 'Sweet Spot%']]
         result = result.sort_values(by='Batted Balls', ascending=False)
 
         fig, ax = plt.subplots(figsize=(8, len(result) * 2))
@@ -621,7 +638,7 @@ if selected_pitcher_or_batter == 'Pitcher':
 
         for (i, j), cell in table.get_celld().items():
             if i == 0:
-                cell.set_text_props(fontweight='bold', fontsize=10, color='black')
+                cell.set_text_props(fontweight='bold', fontsize=9, color='black')
             else:
                 cell.set_text_props(fontsize=10, color='black')
 
@@ -848,7 +865,7 @@ if selected_pitcher_or_batter == 'Pitcher':
 
         st.pyplot(fig)
 else:
-    unique_batters = sorted(data['Batter'].unique(), key=lambda name: name.split()[-1])
+    unique_batters = sorted(data['Batter'].unique(), key=lambda name: name.split(",")[0].strip())
     selected_batter = st.sidebar.selectbox("Select a Batter", unique_batters)
 
     batter_data = data[data['Batter'] == selected_batter]
@@ -922,6 +939,19 @@ else:
     elif selected_pitcher_hand == 'L':
         filtered_data = filtered_data[filtered_data['PitcherThrows'] == 'Lefty']
 
+    pitch_type_options = sorted(filtered_data['Pitch Type'].dropna().astype(str).unique().tolist())
+    pitch_type_options.insert(0, "All")
+
+    selected_pitch_types = st.sidebar.multiselect(
+        "Select Pitch Type(s)",
+        options=pitch_type_options,
+        default=["All"],
+        key="tab1_pitch_type_multiselect"
+    )
+
+    if "All" not in selected_pitch_types:
+        filtered_data = filtered_data[filtered_data['Pitch Type'].isin(selected_pitch_types)]
+
     if filtered_data.empty:
         st.markdown(
             "<h1 style='text-align: center; font-size: 40px; color: black;'>No data ☹️</h1>",
@@ -936,7 +966,7 @@ else:
         unsafe_allow_html=True,
     )
 
-    tab1, tab2 = st.tabs(["Game Logs", "Batter Hot Zones"])
+    tab1, tab2, tab3 = st.tabs(["Game Logs", "Batter Hot Zones", "Seasonal Stats"])
             
     with tab1:
         st.markdown(
@@ -1291,3 +1321,160 @@ else:
 
         st.pyplot(fig)
         st.markdown("<br>", unsafe_allow_html=True)
+
+    with tab3:
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Zone & Swing Metrics</h2>",
+            unsafe_allow_html=True,
+        )
+
+        conditions = [
+            (filtered_data['PlateLocHeight'] >= 1.5) & (filtered_data['PlateLocHeight'] <= 3.3) &
+            (filtered_data['PlateLocSide'] >= -0.9) & (filtered_data['PlateLocSide'] <= 0.9)
+        ]
+
+        values = [1]
+
+        filtered_data['Zone'] = np.select(conditions, values, default=0)
+
+        filtered_data['Swing'] = filtered_data['PitchCall'].isin(['InPlay', 'StrikeSwinging', 'FoulBall']).astype(int)
+
+        grouped = filtered_data.groupby('Batter')
+
+        result = grouped.size().reset_index(name='Pitches')
+        result['Zone%'] = ((grouped.apply(lambda x: (x['Zone'] == 1).sum() / len(x)).values) * 100).round(1)
+        result['Z-Swing%'] = ((grouped.apply(lambda x: ((x['Zone'] == 1) & (x['Swing'] == 1)).sum() / (x['Zone'] == 1).sum() if (x['Zone'] == 1).sum() > 0 else 0).values) * 100).round(1)
+        result['Chase%'] = ((grouped.apply(lambda x: ((x['Zone'] == 0) & (x['Swing'] == 1)).sum() / (x['Zone'] == 0).sum() if (x['Zone'] == 0).sum() > 0 else 0).values) * 100).round(1)
+        result['Whiff%'] = ((grouped.apply(lambda x: (x['PitchCall'] == 'StrikeSwinging').sum() / (x['Swing'] == 1).sum() if (x['Swing'] == 1).sum() > 0 else 0).values) * 100).round(1)
+
+        result = result[['Pitches', 'Zone%', 'Z-Swing%', 'Chase%', 'Whiff%']]
+        result = result.sort_values(by='Pitches', ascending=False)
+
+        fig, ax = plt.subplots(figsize=(8, len(result) * 2))
+        ax.axis('tight')
+        ax.axis('off')
+
+        table = ax.table(
+            cellText=result.values,
+            colLabels=result.columns,
+            cellLoc='center',
+            loc='center',
+            colColours=['#f0f0f0'] * len(result.columns),
+            cellColours=[['#f0f0f0'] * len(result.columns) for _ in range(len(result))],
+            bbox=[0, 0, 1, 1]
+        )
+
+        for (i, j), cell in table.get_celld().items():
+            if i == 0:
+                cell.set_text_props(fontweight='bold', fontsize=10, color='black')
+            else:
+                cell.set_text_props(fontsize=10, color='black')
+
+        table.auto_set_column_width(col=list(range(len(result.columns))))
+        table.auto_set_font_size(False)
+
+        st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Batted Ball Metrics</h2>",
+            unsafe_allow_html=True,
+        )
+
+        filtered_data['Batted Balls'] = (
+            (filtered_data['TaggedHitType'].isin(['GroundBall', 'LineDrive', 'FlyBall', 'PopUp'])) &
+            (filtered_data['PitchCall'] == 'InPlay')
+        ).astype(int)
+
+        grouped = filtered_data.groupby('Batter')
+
+        result = grouped['Batted Balls'].sum().reset_index(name='Batted Balls')
+
+        hit_types = ['Ground Ball', 'Line Drive', 'Fly Ball', 'Pop Up']
+        for hit_type in hit_types:
+            result[hit_type + '%'] = grouped.apply(
+                lambda x: (x['TaggedHitType'] == hit_type.replace(' ', '')).sum() / x['Batted Balls'].sum() * 100
+            ).values.round(1)
+
+        result = result[['Batted Balls', 'Ground Ball%', 'Line Drive%', 'Fly Ball%', 'Pop Up%']]
+        result = result.sort_values(by='Batted Balls', ascending=False)
+        result = result[result['Batted Balls'] > 0]
+
+        fig, ax = plt.subplots(figsize=(8, len(result) * 2))
+        ax.axis('tight')
+        ax.axis('off')
+
+        table = ax.table(
+            cellText=result.values,
+            colLabels=result.columns,
+            cellLoc='center',
+            loc='center',
+            colColours=['#f0f0f0'] * len(result.columns),
+            cellColours=[['#f0f0f0'] * len(result.columns) for _ in range(len(result))],
+            bbox=[0, 0, 1, 1]
+        )
+
+        for (i, j), cell in table.get_celld().items():
+            if i == 0:
+                cell.set_text_props(fontweight='bold', fontsize=9, color='black')
+            else:
+                cell.set_text_props(fontsize=10, color='black')
+
+        table.auto_set_column_width(col=list(range(len(result.columns))))
+        table.auto_set_font_size(False)
+
+        st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Statcast Metrics</h2>",
+            unsafe_allow_html=True,
+        )
+
+        grouped = filtered_data.groupby('Batter')
+
+        filtered_data['Hard Hit'] = (filtered_data['ExitSpeed'] >= 95) & (filtered_data['PitchCall'] == 'InPlay')
+        filtered_data['Sweet Spot'] = filtered_data['Angle'].between(8, 32) & (filtered_data['PitchCall'] == 'InPlay')
+
+        batted_balls_data = filtered_data[filtered_data['Batted Balls'] == 1]
+
+        result = batted_balls_data.groupby('Batter').agg(
+            **{
+                'Batted Balls': ('Batted Balls', 'sum'),
+                'Avg EV': ('ExitSpeed', lambda x: x.mean().round(1)),
+                'Max EV': ('ExitSpeed', lambda x: x.max().round(1)),
+                'Avg LA': ('Angle', lambda x: x.mean().round(1)),
+                'Hard Hit%': ('Hard Hit', lambda x: (x.mean() * 100).round(1)),
+                'Sweet Spot%': ('Sweet Spot', lambda x: (x.mean() * 100).round(1))
+            }
+        ).reset_index()
+
+        result = result[['Batted Balls', 'Avg EV', 'Max EV', 'Avg LA', 'Hard Hit%', 'Sweet Spot%']]
+        result = result.sort_values(by='Batted Balls', ascending=False)
+
+        fig, ax = plt.subplots(figsize=(8, len(result) * 2))
+        ax.axis('tight')
+        ax.axis('off')
+
+        table = ax.table(
+            cellText=result.values,
+            colLabels=result.columns,
+            cellLoc='center',
+            loc='center',
+            colColours=['#f0f0f0'] * len(result.columns),
+            cellColours=[['#f0f0f0'] * len(result.columns) for _ in range(len(result))],
+            bbox=[0, 0, 1, 1]
+        )
+
+        for (i, j), cell in table.get_celld().items():
+            if i == 0:
+                cell.set_text_props(fontweight='bold', fontsize=10, color='black')
+            else:
+                cell.set_text_props(fontsize=10, color='black')
+
+        table.auto_set_column_width(col=list(range(len(result.columns))))
+        table.auto_set_font_size(False)
+
+        st.pyplot(fig)
