@@ -372,7 +372,14 @@ batters = [
             [1000198988, 90000255774], ### Michael Maginnis
             #[1000075636], ## John Beverley
             #[90000255731, 828714], ### Austin Killingsworth
-            [1000086400] ### Kaleb freeman
+            [1000086400], ### Kaleb freeman
+            [822017],
+            [1000149734],
+            [831242],
+            [823231],
+            [831234],
+            [826609, 10104166],
+            [1000116340]
 ]
 
 pitcher_names = map_ids_to_names(pitches_df, pitchers, 'PitcherId', 'Pitcher')
