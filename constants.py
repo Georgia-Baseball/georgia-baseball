@@ -98,3 +98,42 @@ median_features = [
     'RelSpeed', 'SpinRate', 'SpinAxis', 'RelHeight', 'RelSide', 'Extension', 
     'ax0', 'ay0', 'az0', 'avg_fb_RelSpeed', 'avg_fb_ax0', 'avg_fb_az0', 'avg_fb_RelHeight', 'avg_fb_RelSide'
 ]
+
+woba_mapping = {
+    "Out": 0,
+    "Strikeout": 0,
+    "Walk": 0.69,
+    "HitByPitch": 0.72,
+    "Single": 0.89,
+    "Double": 1.27,
+    "HomeRun": 2.1,
+    "Undefined": None,
+    "Error": 0,
+    "Triple": 1.62
+}
+
+slg_mapping = {
+    "Out": 0,
+    "Strikeout": 0,
+    "Walk": None,
+    "HitByPitch": None,
+    "Single": 1,
+    "Double": 2,
+    "HomeRun": 4,
+    "Undefined": None,
+    "Error": 0,
+    "Triple": 3
+}
+
+ba_mapping = {
+    "Out": 0,
+    "Strikeout": 0,
+    "Walk": None,
+    "HitByPitch": None,
+    "Single": 1,
+    "Double": 1,
+    "HomeRun": 1,
+    "Undefined": None,
+    "Error": 0,
+    "Triple": 1
+}

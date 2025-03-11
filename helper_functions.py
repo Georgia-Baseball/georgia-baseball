@@ -603,3 +603,20 @@ def compute_batter_stuff_value(pitches_df, pivoted_values):
     merged_df['BatterStuffValue'] = weighted_sum
 
     return merged_df
+
+
+def apply_multiclass_model(pitches_df):
+    multiclass_model = joblib.load("multiclass_model.pkl")
+    valid_rows = ~pitches_df[['ExitSpeed', 'Angle', 'DirectionBucket']].isna().any(axis=1)
+
+    for i in range(5):
+        pitches_df[f'prob_{i}'] = np.nan
+
+    if valid_rows.any():
+        X_valid = pitches_df.loc[valid_rows, ['ExitSpeed', 'Angle', 'DirectionBucket']]
+        y_pred_probs = multiclass_model.predict_proba(X_valid)
+
+        for i in range(5):
+            pitches_df.loc[valid_rows, f'prob_{i}'] = y_pred_probs[:, i]
+
+    return pitches_df
