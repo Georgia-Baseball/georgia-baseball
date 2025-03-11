@@ -198,8 +198,6 @@ if selected_pitcher_or_batter == 'Pitcher':
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Pitch Data", "Pitch Usage", "Pitch Type Stats", "Game Logs", "Batted Balls Allowed"])
             
     with tab1:
-        st.write(filtered_data['PlayResult'].value_counts())
-        st.dataframe(filtered_data)
         st.markdown(
             "<h2 style='text-align: center; font-weight: bold;'>Pitch Summary</h2>",
             unsafe_allow_html=True,
