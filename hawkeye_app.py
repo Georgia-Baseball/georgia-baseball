@@ -1762,7 +1762,7 @@ else:
         ax.axis('tight')
         ax.axis('off')
 
-        table = ax.table(çç
+        table = ax.table(
             cellText=result.values,
             colLabels=result.columns,
             cellLoc='center',
