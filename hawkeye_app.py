@@ -181,6 +181,19 @@ if selected_pitcher_or_batter == 'Pitcher':
     elif selected_hitter_hand == 'L':
         filtered_data = filtered_data[filtered_data['BatterSide'] == 'Lefty']
 
+    pitch_type_options = sorted(filtered_data['Pitch Type'].dropna().astype(str).unique().tolist())
+    pitch_type_options.insert(0, "All")
+
+    selected_pitch_types = st.sidebar.multiselect(
+        "Select Pitch Type(s)",
+        options=pitch_type_options,
+        default=["All"],
+        key="tab1_pitch_type_multiselect"
+    )
+
+    if "All" not in selected_pitch_types:
+        filtered_data = filtered_data[filtered_data['Pitch Type'].isin(selected_pitch_types)]
+
     if filtered_data.empty:
         st.markdown(
             "<h1 style='text-align: center; font-size: 40px; color: black;'>No data ☹️</h1>",
@@ -195,7 +208,7 @@ if selected_pitcher_or_batter == 'Pitcher':
         unsafe_allow_html=True,
     )
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Pitch Data", "Pitch Usage", "Pitch Type Stats", "Game Logs", "Batted Balls Allowed"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Pitch Data", "Pitcher Hot Zones", "Pitch Usage", "Pitch Type Stats", "Game Logs", "Batted Balls Allowed"])
             
     with tab1:
         st.markdown(
@@ -285,6 +298,194 @@ if selected_pitcher_or_batter == 'Pitcher':
             st.markdown("<br>", unsafe_allow_html=True)
 
     with tab2:
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Swing Rate Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
+        filtered_data['Swing'] = filtered_data['PitchCall'].isin(['InPlay', 'StrikeSwinging', 'FoulBall']).astype(int)
+        filtered_data['AdjPlateLocSide'] = filtered_data['PlateLocSide'] * -1
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+
+        sns.kdeplot(
+            data=filtered_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            hue='Swing', 
+            fill=True, 
+            levels=15, 
+            palette={1: 'red', 0: 'blue'},
+            alpha=0.5,
+            ax=ax
+        )
+
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(0, 5)
+
+        ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
+        home_plate_coords = [
+            (-0.9, 0.8), (0.9, 0.8),
+            (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
+        ]
+        home_plate = patches.Polygon(
+            home_plate_coords,
+            closed=True,
+            edgecolor='black',
+            facecolor='grey',
+            linewidth=2
+        )
+        ax.add_patch(home_plate)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Whiff Rate Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+
+        filtered_data['Whiff'] = (filtered_data['PitchCall'] == 'StrikeSwinging').astype(int)
+
+        sns.kdeplot(
+            data=filtered_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            hue='Whiff', 
+            fill=True, 
+            levels=15, 
+            palette={1: 'red', 0: 'blue'},
+            alpha=0.5,
+            ax=ax
+        )
+
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(0, 5)
+
+        ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
+        home_plate_coords = [
+            (-0.9, 0.8), (0.9, 0.8),
+            (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
+        ]
+        home_plate = patches.Polygon(
+            home_plate_coords,
+            closed=True,
+            edgecolor='black',
+            facecolor='grey',
+            linewidth=2
+        )
+        ax.add_patch(home_plate)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>Exit Velocity Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+
+        sns.kdeplot(
+            data=filtered_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            weights=filtered_data['ExitSpeed'],
+            fill=True, 
+            levels=15, 
+            cmap="coolwarm",
+            alpha=0.7,
+            ax=ax
+        )
+
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(0, 5)
+
+        ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
+        home_plate_coords = [
+            (-0.9, 0.8), (0.9, 0.8),
+            (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
+        ]
+        home_plate = patches.Polygon(
+            home_plate_coords,
+            closed=True,
+            edgecolor='black',
+            facecolor='grey',
+            linewidth=2
+        )
+        ax.add_patch(home_plate)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        st.pyplot(fig)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center; font-weight: bold;'>xwOBACON Hot Zones</h2>",
+            unsafe_allow_html=True,
+        )
+
+        batted_balls_data = filtered_data[filtered_data['Batted Balls'] == 1]
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+
+        sns.kdeplot(
+            data=batted_balls_data, 
+            x='AdjPlateLocSide', 
+            y='PlateLocHeight', 
+            weights=batted_balls_data['xwOBA'],
+            fill=True, 
+            levels=15, 
+            cmap="coolwarm",
+            alpha=0.7,
+            ax=ax
+        )
+
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(0, 5)
+
+        ax.add_patch(plt.Rectangle((-0.9, 1.5), 1.8, 1.8, fill=False, edgecolor='black', linewidth=2))
+
+        home_plate_coords = [
+            (-0.9, 0.8), (0.9, 0.8),
+            (0.9, 0.4), (0, 0.1), (-0.9, 0.4)
+        ]
+        home_plate = patches.Polygon(
+            home_plate_coords,
+            closed=True,
+            edgecolor='black',
+            facecolor='grey',
+            linewidth=2
+        )
+        ax.add_patch(home_plate)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        st.pyplot(fig)
+
+    with tab3:
         overall_pitch_data = (
             filtered_data.groupby('Pitch Type').size().reset_index(name='Pitch Count')
         )
@@ -533,7 +734,7 @@ if selected_pitcher_or_batter == 'Pitcher':
                 st.pyplot(fig)
                 plt.close(fig)
 
-    with tab3:
+    with tab4:
         st.markdown(
             "<h2 style='text-align: center; font-weight: bold;'>Zone & Swing Metrics</h2>",
             unsafe_allow_html=True,
@@ -782,7 +983,7 @@ if selected_pitcher_or_batter == 'Pitcher':
 
         st.pyplot(fig)
 
-    with tab4:
+    with tab5:
         st.markdown(
             "<h2 style='text-align: center; font-weight: bold;'>Box Score Statistics</h2>",
             unsafe_allow_html=True,
@@ -1092,7 +1293,7 @@ if selected_pitcher_or_batter == 'Pitcher':
 
         st.pyplot(fig)
 
-    with tab5:
+    with tab6:
         st.markdown(
             "<h2 style='text-align: center; font-weight: bold;'>Batted Ball Metrics</h2>",
             unsafe_allow_html=True,
