@@ -745,7 +745,7 @@ if selected_pitcher_or_batter == 'Pitcher':
 
         batted_balls_data = filtered_data[filtered_data['Batted Balls'] == 1]
 
-        result = filtered_data.groupby(['Pitcher', 'Pitch Type']).agg(
+        result = batted_balls_data.groupby(['Pitcher', 'Pitch Type']).agg(
             **{
                 'Batted Balls': ('Batted Balls', 'sum'),
                 'xBA': ('xBA', lambda x: x.mean().round(3)),
